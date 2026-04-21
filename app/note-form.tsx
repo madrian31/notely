@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, TextInput } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams } from 'expo-router';
+import { View, TextInput, Platform } from 'react-native';
+import { Storage } from './(tabs)/storage';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Note = {
   id: string;
@@ -12,22 +13,31 @@ type Note = {
 
 export default function NoteForm() {
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestRef = useRef({ title: '', text: '' });
-
-  // ✅ FIX: track the note's ID locally so new notes aren't duplicated on each save
   const noteIdRef = useRef<string | null>(id ?? null);
+  const hasChangesRef = useRef(false);
+  const isSavingRef = useRef(false); // ← prevent double save
 
   useEffect(() => {
     loadNotes();
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (hasChangesRef.current && !isSavingRef.current) {
+        saveNow();
+      }
+    };
   }, []);
 
   const loadNotes = async () => {
-    const stored = await AsyncStorage.getItem('notes');
+    const stored = await Storage.getItem('notes');
     const parsed: Note[] = stored ? JSON.parse(stored) : [];
 
     if (id) {
@@ -40,45 +50,48 @@ export default function NoteForm() {
     }
   };
 
+  const saveNow = async () => {
+    if (isSavingRef.current) return; // ← prevent double save
+    isSavingRef.current = true;
+
+    const { title, text } = latestRef.current;
+    const cleanTitle = title.trim();
+    const cleanText = text.trim();
+
+    if (!cleanTitle && !cleanText) {
+      isSavingRef.current = false;
+      return;
+    }
+
+    const stored = await Storage.getItem('notes');
+    const parsed: Note[] = stored ? JSON.parse(stored) : [];
+    let updated: Note[];
+
+    if (noteIdRef.current) {
+      updated = parsed.map(n =>
+        n.id === noteIdRef.current
+          ? { ...n, title: cleanTitle, text: cleanText }
+          : n
+      );
+    } else {
+      const newId = Date.now().toString();
+      noteIdRef.current = newId;
+      updated = [
+        { id: newId, title: cleanTitle, text: cleanText, date: new Date().toISOString() },
+        ...parsed,
+      ];
+    }
+
+    await Storage.setItem('notes', JSON.stringify(updated));
+    hasChangesRef.current = false;
+    isSavingRef.current = false;
+  };
+
   const triggerSave = () => {
+    hasChangesRef.current = true;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
     timeoutRef.current = setTimeout(async () => {
-      const { title, text } = latestRef.current;
-
-      const cleanTitle = title.trim();
-      const cleanText = text.trim();
-
-      if (!cleanTitle && !cleanText) return;
-
-      const stored = await AsyncStorage.getItem('notes');
-      const parsed: Note[] = stored ? JSON.parse(stored) : [];
-
-      let updated: Note[];
-
-      if (noteIdRef.current) {
-        // ✅ Update existing note (covers both param-id and first-save-generated id)
-        updated = parsed.map(n =>
-          n.id === noteIdRef.current
-            ? { ...n, title: cleanTitle, text: cleanText }
-            : n
-        );
-      } else {
-        // ✅ First save: generate an ID and remember it for all future saves
-        const newId = Date.now().toString();
-        noteIdRef.current = newId;
-
-        const newNote: Note = {
-          id: newId,
-          title: cleanTitle,
-          text: cleanText,
-          date: new Date().toISOString(),
-        };
-
-        updated = [newNote, ...parsed];
-      }
-
-      await AsyncStorage.setItem('notes', JSON.stringify(updated));
+      await saveNow();
     }, 1000);
   };
 
@@ -95,7 +108,8 @@ export default function NoteForm() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000', padding: 20 }}>
+    // ← paddingTop para hindi naka-sagad sa taas sa iOS
+    <View style={{ flex: 1, backgroundColor: '#000', padding: 20, paddingTop: insets.top + 20 }}>
       <TextInput
         value={title}
         onChangeText={handleTitleChange}
