@@ -1,11 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
-  View, Text, Pressable, FlatList, Modal, TextInput,
-  StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
-} from 'react-native';
-import { Storage } from './storage';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  FlatList,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Storage } from "./storage";
 
 export type Journal = {
   id: string;
@@ -23,14 +29,92 @@ type Note = {
 };
 
 const JOURNAL_COLORS = [
-  '#c084fc', '#f87171', '#fb923c', '#fbbf24',
-  '#4ade80', '#60a5fa', '#f472b6', '#a78bfa',
+  "#d45f7f",
+  "#e05252",
+  "#d47bb5",
+  "#e08a8a",
+  "#c9956e",
+  "#e0994d",
+  "#3ecfb2",
+  "#4db8e8",
+  "#3a6ed4",
+  "#89b4d4",
+  "#8f9de0",
+  "#9c7ae0",
+  "#ffffff",
+  "#c084fc",
 ];
 
-const JOURNAL_EMOJIS = [
-  '📓', '📔', '📒', '📕', '📗', '📘', '📙',
-  '🙏', '💪', '❤️', '🌙', '☀️', '💭', '✨',
-  '🎯', '🌿', '🔥', '💡', '🎵', '✈️', '🏃', '😊',
+const JOURNAL_ICONS = [
+  "😊",
+  "📦",
+  "🏠",
+  "🛏️",
+  "📺",
+  "📚",
+  "📞",
+  "🔑",
+  "🧮",
+  "💳",
+  "🎈",
+  "💡",
+  "🌸",
+  "✈️",
+  "🗺️",
+  "🕹️",
+  "🌐",
+  "🚗",
+  "🚲",
+  "🚢",
+  "🧳",
+  "⛺",
+  "🪧",
+  "📷",
+  "☂️",
+  "🚌",
+  "🚂",
+  "🏍️",
+  "🎒",
+  "🍴",
+  "🥄",
+  "☕",
+  "🧃",
+  "🍷",
+  "🥘",
+  "🥕",
+  "🍎",
+  "🎂",
+  "🍿",
+  "🧺",
+  "⛰️",
+  "☀️",
+  "❄️",
+  "⚡",
+  "🌙",
+  "🌧️",
+  "🔥",
+  "🌈",
+  "🍃",
+  "🌳",
+  "🔭",
+  "⚛️",
+  "🐕",
+  "🐈",
+  "🐦",
+  "🐢",
+  "🚶",
+  "👫",
+  "👨‍👩‍👧",
+  "🤰",
+  "👨‍👩‍👧‍👦",
+  "🧗",
+  "♿",
+  "👋",
+  "👍",
+  "✋",
+  "👁️",
+  "🙂",
+  "😶",
 ];
 
 export default function HomeScreen() {
@@ -42,19 +126,27 @@ export default function HomeScreen() {
   const [totalWords, setTotalWords] = useState(0);
   const [totalNotes, setTotalNotes] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newJournalName, setNewJournalName] = useState('');
+  const [newJournalName, setNewJournalName] = useState("");
   const [selectedColor, setSelectedColor] = useState(JOURNAL_COLORS[0]);
-  const [selectedEmoji, setSelectedEmoji] = useState(JOURNAL_EMOJIS[0]);
+  const [selectedIcon, setSelectedIcon] = useState(JOURNAL_ICONS[0]);
+
+  // Press-hold menu
+  const [menuJournal, setMenuJournal] = useState<Journal | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  // Edit modal (reuses create modal fields)
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingJournal, setEditingJournal] = useState<Journal | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       loadJournals();
-    }, [])
+    }, []),
   );
 
   const loadJournals = async () => {
     try {
-      const stored = await Storage.getItem('journals');
+      const stored = await Storage.getItem("journals");
       const list: Journal[] = stored ? JSON.parse(stored) : [];
       setJournals(list);
 
@@ -68,7 +160,8 @@ export default function HomeScreen() {
         counts[j.id] = notes.length;
         noteCount += notes.length;
         wordCount += notes.reduce(
-          (acc, n) => acc + n.text.trim().split(/\s+/).filter(Boolean).length, 0
+          (acc, n) => acc + n.text.trim().split(/\s+/).filter(Boolean).length,
+          0,
         );
       }
 
@@ -76,14 +169,16 @@ export default function HomeScreen() {
       setTotalNotes(noteCount);
       setTotalWords(wordCount);
     } catch (err) {
-      console.log('loadJournals error:', err);
+      console.log("loadJournals error:", err);
     }
   };
 
   const openAddModal = () => {
-    setNewJournalName('');
-    setSelectedColor(JOURNAL_COLORS[Math.floor(Math.random() * JOURNAL_COLORS.length)]);
-    setSelectedEmoji(JOURNAL_EMOJIS[Math.floor(Math.random() * 7)]);
+    setNewJournalName("");
+    setSelectedColor(
+      JOURNAL_COLORS[Math.floor(Math.random() * JOURNAL_COLORS.length)],
+    );
+    setSelectedIcon(JOURNAL_ICONS[Math.floor(Math.random() * 8)]);
     setModalVisible(true);
   };
 
@@ -94,42 +189,91 @@ export default function HomeScreen() {
       id: Date.now().toString(),
       name: trimmed,
       color: selectedColor,
-      emoji: selectedEmoji,
+      emoji: selectedIcon,
       createdAt: new Date().toISOString(),
     };
     const updated = [...journals, newJournal];
     setJournals(updated);
-    await Storage.setItem('journals', JSON.stringify(updated));
+    await Storage.setItem("journals", JSON.stringify(updated));
     setModalVisible(false);
   };
 
   const getGreeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning ☀️';
-    if (h < 18) return 'Good afternoon 🌤';
-    return 'Good evening 🌙';
+    if (h < 12) return "Good morning ☀️";
+    if (h < 18) return "Good afternoon 🌤";
+    return "Good evening 🌙";
+  };
+
+  const deleteJournal = async (journal: Journal) => {
+    const updated = journals.filter((j) => j.id !== journal.id);
+    setJournals(updated);
+    await Storage.setItem("journals", JSON.stringify(updated));
+    // Also remove its notes
+    await Storage.removeItem(`notes_${journal.id}`);
+    setMenuVisible(false);
+    setMenuJournal(null);
+  };
+
+  const openEditModal = (journal: Journal) => {
+    setEditingJournal(journal);
+    setNewJournalName(journal.name);
+    setSelectedColor(journal.color);
+    setSelectedIcon(journal.emoji);
+    setMenuVisible(false);
+    setMenuJournal(null);
+    setEditModalVisible(true);
+  };
+
+  const saveEditedJournal = async () => {
+    if (!editingJournal) return;
+    const trimmed = newJournalName.trim();
+    if (!trimmed) return;
+    const updated = journals.map((j) =>
+      j.id === editingJournal.id
+        ? { ...j, name: trimmed, color: selectedColor, emoji: selectedIcon }
+        : j,
+    );
+    setJournals(updated);
+    await Storage.setItem("journals", JSON.stringify(updated));
+    setEditModalVisible(false);
+    setEditingJournal(null);
   };
 
   const goToNoteList = (item: Journal) => {
-    router.push(`/note-list?journalId=${item.id}&journalName=${encodeURIComponent(item.name)}&journalColor=${encodeURIComponent(item.color)}` as any);
+    router.push(
+      `/note-list?journalId=${item.id}&journalName=${encodeURIComponent(item.name)}&journalColor=${encodeURIComponent(item.color)}` as any,
+    );
   };
 
   const renderJournal = ({ item }: { item: Journal }) => {
     const count = noteCounts[item.id] ?? 0;
     return (
       <Pressable
-        style={({ pressed }) => [styles.journalCard, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [
+          styles.journalCard,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={() => goToNoteList(item)}
+        onLongPress={() => {
+          setMenuJournal(item);
+          setMenuVisible(true);
+        }}
+        delayLongPress={400}
       >
         <View style={[styles.journalAccent, { backgroundColor: item.color }]} />
-        <View style={[styles.journalIcon, { backgroundColor: item.color + '22' }]}>
-          <Text style={{ fontSize: 22 }}>{item.emoji || '📓'}</Text>
+        <View
+          style={[styles.journalIcon, { backgroundColor: item.color + "22" }]}
+        >
+          <Text style={{ fontSize: 22 }}>{item.emoji || "📓"}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.journalName}>{item.name}</Text>
           <Text style={styles.journalSub}>
-            {new Date(item.createdAt).toLocaleDateString('default', {
-              month: 'short', day: 'numeric', year: 'numeric',
+            {new Date(item.createdAt).toLocaleDateString("default", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
             })}
           </Text>
         </View>
@@ -143,7 +287,6 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-
       <View style={styles.header}>
         <Text style={styles.headerLabel}>Journal</Text>
         <Pressable onPress={openAddModal} style={styles.addBtn}>
@@ -177,225 +320,536 @@ export default function HomeScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>📔</Text>
           <Text style={styles.emptyText}>No journals yet</Text>
-          <Text style={styles.emptySub}>Tap ＋ to create your first journal</Text>
+          <Text style={styles.emptySub}>
+            Tap ＋ to create your first journal
+          </Text>
         </View>
       ) : (
         <FlatList
           data={journals}
-          keyExtractor={j => j.id}
+          keyExtractor={(j) => j.id}
           renderItem={renderJournal}
           contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
           showsVerticalScrollIndicator={false}
         />
       )}
 
+      {/* ── Press-hold Options Menu ── */}
       <Modal
         transparent
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+        visible={menuVisible}
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+        <Pressable
+          style={styles.menuOverlay}
+          onPress={() => setMenuVisible(false)}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalVisible(false)} />
-          <View style={styles.modalBox}>
-            <View style={styles.modalHandle} />
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View style={styles.menuBox}>
+              <View style={styles.menuHeader}>
+                <View
+                  style={[
+                    styles.menuJournalIcon,
+                    {
+                      backgroundColor: (menuJournal?.color ?? "#c084fc") + "22",
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 18 }}>{menuJournal?.emoji}</Text>
+                </View>
+                <Text style={styles.menuTitle} numberOfLines={1}>
+                  {menuJournal?.name}
+                </Text>
+                <Pressable
+                  onPress={() => setMenuVisible(false)}
+                  style={styles.menuClose}
+                  hitSlop={8}
+                >
+                  <Text style={styles.menuCloseText}>✕</Text>
+                </Pressable>
+              </View>
 
-            {/* Preview */}
-            <View style={styles.modalPreview}>
-              <View style={[styles.previewIcon, { backgroundColor: selectedColor + '33' }]}>
-                <Text style={{ fontSize: 36 }}>{selectedEmoji}</Text>
+              <Pressable
+                onPress={() => menuJournal && openEditModal(menuJournal)}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  pressed && { backgroundColor: "#1e1e1e" },
+                ]}
+              >
+                <Text style={styles.menuRowIcon}>✏️</Text>
+                <Text style={styles.menuRowText}>Edit Journal</Text>
+              </Pressable>
+
+              <View style={styles.menuDivider} />
+
+              <Pressable
+                onPress={() => menuJournal && deleteJournal(menuJournal)}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  pressed && { backgroundColor: "#1e1e1e" },
+                ]}
+              >
+                <Text style={styles.menuRowIcon}>🗑️</Text>
+                <Text style={[styles.menuRowText, { color: "#f87171" }]}>
+                  Delete Journal
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Edit Journal Modal (full-screen, same as create) ── */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View
+          style={[
+            styles.fsContainer,
+            { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 },
+          ]}
+        >
+          <View style={styles.fsHeader}>
+            <Pressable
+              onPress={() => setEditModalVisible(false)}
+              style={styles.fsHeaderBtn}
+              hitSlop={12}
+            >
+              <View style={styles.fsCloseCircle}>
+                <Text style={styles.fsCloseText}>✕</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              onPress={saveEditedJournal}
+              style={styles.fsHeaderBtn}
+              hitSlop={12}
+            >
+              <View
+                style={[
+                  styles.fsSaveCircle,
+                  { backgroundColor: selectedColor },
+                ]}
+              >
+                <Text style={styles.fsSaveText}>✓</Text>
+              </View>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.fsPreviewWrap}>
+              <View
+                style={[
+                  styles.fsPreviewOuter,
+                  { backgroundColor: selectedColor + "28" },
+                ]}
+              >
+                <Text style={styles.fsPreviewEmoji}>{selectedIcon}</Text>
               </View>
             </View>
 
-            <Text style={styles.modalTitle}>New Journal</Text>
-            <Text style={styles.modalSubtitle}>Name, color, and icon</Text>
-
             <TextInput
-              style={styles.modalInput}
+              style={styles.fsNameInput}
               value={newJournalName}
               onChangeText={setNewJournalName}
-              placeholder="e.g. My Daily Journal"
-              placeholderTextColor="#555"
+              placeholder="Journal name"
+              placeholderTextColor="#666"
               autoFocus
-              selectionColor="#c084fc"
+              selectionColor={selectedColor}
               returnKeyType="done"
-              onSubmitEditing={saveNewJournal}
+              onSubmitEditing={saveEditedJournal}
               maxLength={40}
+              textAlign="center"
             />
 
-            {/* Color picker */}
-            <Text style={styles.pickerLabel}>Color</Text>
-            <View style={styles.colorRow}>
-              {JOURNAL_COLORS.map(c => (
+            <View style={styles.fsColorGrid}>
+              {JOURNAL_COLORS.map((c) => (
                 <Pressable
                   key={c}
                   onPress={() => setSelectedColor(c)}
                   style={[
-                    styles.colorDot,
+                    styles.fsColorDot,
                     { backgroundColor: c },
-                    selectedColor === c && styles.colorDotSelected,
+                    selectedColor === c && [
+                      styles.fsColorDotSelected,
+                      { borderColor: c === "#ffffff" ? "#888" : c },
+                    ],
                   ]}
                 />
               ))}
             </View>
 
-            {/* Emoji picker */}
-            <Text style={styles.pickerLabel}>Icon</Text>
-            <ScrollView
-              horizontal={false}
-              style={styles.emojiScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.emojiGrid}>
-                {JOURNAL_EMOJIS.map(e => (
-                  <Pressable
-                    key={e}
-                    onPress={() => setSelectedEmoji(e)}
-                    style={[
-                      styles.emojiBtn,
-                      selectedEmoji === e && { backgroundColor: selectedColor + '33', borderColor: selectedColor },
-                    ]}
-                  >
-                    <Text style={styles.emojiText}>{e}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                style={[styles.modalBtn, styles.modalBtnCancel]}
-              >
-                <Text style={styles.modalBtnCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={saveNewJournal}
-                style={[styles.modalBtn, { backgroundColor: selectedColor }]}
-              >
-                <Text style={styles.modalBtnSaveText}>Create</Text>
-              </Pressable>
+            <View style={styles.fsIconGrid}>
+              {JOURNAL_ICONS.map((icon) => (
+                <Pressable
+                  key={icon}
+                  onPress={() => setSelectedIcon(icon)}
+                  style={[
+                    styles.fsIconBtn,
+                    selectedIcon === icon && {
+                      borderColor: selectedColor,
+                      borderWidth: 2,
+                      backgroundColor: selectedColor + "18",
+                    },
+                  ]}
+                >
+                  <Text style={styles.fsIconEmoji}>{icon}</Text>
+                </Pressable>
+              ))}
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </ScrollView>
+        </View>
       </Modal>
 
+      {/* ── Full-Screen iOS-style Create Journal Modal ── */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View
+          style={[
+            styles.fsContainer,
+            { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 },
+          ]}
+        >
+          {/* Header row */}
+          <View style={styles.fsHeader}>
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              style={styles.fsHeaderBtn}
+              hitSlop={12}
+            >
+              <View style={styles.fsCloseCircle}>
+                <Text style={styles.fsCloseText}>✕</Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={saveNewJournal}
+              style={styles.fsHeaderBtn}
+              hitSlop={12}
+            >
+              <View
+                style={[
+                  styles.fsSaveCircle,
+                  { backgroundColor: selectedColor },
+                ]}
+              >
+                <Text style={styles.fsSaveText}>✓</Text>
+              </View>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Icon Preview */}
+            <View style={styles.fsPreviewWrap}>
+              <View
+                style={[
+                  styles.fsPreviewOuter,
+                  { backgroundColor: selectedColor + "28" },
+                ]}
+              >
+                <Text style={styles.fsPreviewEmoji}>{selectedIcon}</Text>
+              </View>
+            </View>
+
+            {/* Name input */}
+            <TextInput
+              style={styles.fsNameInput}
+              value={newJournalName}
+              onChangeText={setNewJournalName}
+              placeholder="Journal name"
+              placeholderTextColor="#666"
+              autoFocus
+              selectionColor={selectedColor}
+              returnKeyType="done"
+              onSubmitEditing={saveNewJournal}
+              maxLength={40}
+              textAlign="center"
+            />
+
+            {/* Color Picker */}
+            <View style={styles.fsColorGrid}>
+              {JOURNAL_COLORS.map((c) => (
+                <Pressable
+                  key={c}
+                  onPress={() => setSelectedColor(c)}
+                  style={[
+                    styles.fsColorDot,
+                    { backgroundColor: c },
+                    selectedColor === c && [
+                      styles.fsColorDotSelected,
+                      { borderColor: c === "#ffffff" ? "#888" : c },
+                    ],
+                  ]}
+                />
+              ))}
+            </View>
+
+            {/* Icon Grid */}
+            <View style={styles.fsIconGrid}>
+              {JOURNAL_ICONS.map((icon) => {
+                const isSelected = selectedIcon === icon;
+                return (
+                  <Pressable
+                    key={icon}
+                    onPress={() => setSelectedIcon(icon)}
+                    style={[
+                      styles.fsIconBtn,
+                      isSelected && {
+                        borderColor: selectedColor,
+                        borderWidth: 2,
+                        backgroundColor: selectedColor + "18",
+                      },
+                    ]}
+                  >
+                    <Text style={styles.fsIconEmoji}>{icon}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor: "#000", paddingHorizontal: 20 },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
   },
   headerLabel: {
-    color: '#555', fontSize: 13, fontWeight: '500',
-    letterSpacing: 0.5, textTransform: 'uppercase',
+    color: "#555",
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   addBtn: { padding: 4 },
-  addBtnText: { color: '#c084fc', fontSize: 26, fontWeight: '300' },
+  addBtnText: { color: "#c084fc", fontSize: 26, fontWeight: "300" },
   greeting: {
-    color: '#fff', fontSize: 28, fontWeight: '700',
-    marginBottom: 24, letterSpacing: -0.5,
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 24,
+    letterSpacing: -0.5,
   },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
   statCard: {
-    flex: 1, backgroundColor: '#111', borderRadius: 14,
-    padding: 14, alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: '#1e1e1e',
+    flex: 1,
+    backgroundColor: "#111",
+    borderRadius: 14,
+    padding: 14,
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#1e1e1e",
   },
   statIcon: { fontSize: 18, marginBottom: 2 },
-  statValue: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  statLabel: { color: '#555', fontSize: 11, fontWeight: '500' },
+  statValue: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  statLabel: { color: "#555", fontSize: 11, fontWeight: "500" },
   sectionLabel: {
-    color: '#444', fontSize: 12, fontWeight: '600',
-    letterSpacing: 0.5, textTransform: 'uppercase',
-    marginBottom: 10, marginLeft: 4,
+    color: "#444",
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 10,
+    marginLeft: 4,
   },
   journalCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#111', borderRadius: 14,
-    marginBottom: 10, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#1e1e1e',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1e1e1e",
   },
-  journalAccent: { width: 4, alignSelf: 'stretch' },
+  journalAccent: { width: 4, alignSelf: "stretch" },
   journalIcon: {
-    width: 46, height: 46, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-    marginLeft: 10, marginVertical: 10, marginRight: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+    marginVertical: 10,
+    marginRight: 10,
   },
-  journalName: { color: '#f0f0f0', fontSize: 16, fontWeight: '600' },
-  journalSub: { color: '#444', fontSize: 12, marginTop: 2 },
+  journalName: { color: "#f0f0f0", fontSize: 16, fontWeight: "600" },
+  journalSub: { color: "#444", fontSize: 12, marginTop: 2 },
   cardRight: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingRight: 14, gap: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 14,
+    gap: 4,
   },
-  noteCount: { fontSize: 13, fontWeight: '600' },
-  chevron: { fontSize: 24, fontWeight: '300' },
+  noteCount: { fontSize: 13, fontWeight: "600" },
+  chevron: { fontSize: 24, fontWeight: "300" },
   emptyState: {
-    flex: 1, alignItems: 'center',
-    justifyContent: 'center', marginTop: -60,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -60,
   },
   emptyIcon: { fontSize: 44, marginBottom: 12 },
-  emptyText: { color: '#fff', fontSize: 17, fontWeight: '600', marginBottom: 6 },
-  emptySub: { color: '#444', fontSize: 13 },
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end',
+  emptyText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
+    marginBottom: 6,
   },
-  modalBox: {
-    backgroundColor: '#141414',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+  emptySub: { color: "#444", fontSize: 13 },
+
+  // ── Press-hold menu styles ──
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuBox: {
+    backgroundColor: "#161616",
+    borderRadius: 16,
+    width: 270,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#242424",
+  },
+  menuHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#222",
+  },
+  menuJournalIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuTitle: { color: "#aaa", fontSize: 14, fontWeight: "600", flex: 1 },
+  menuClose: { padding: 2 },
+  menuCloseText: { color: "#555", fontSize: 15 },
+  menuRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 15,
+  },
+  menuRowIcon: { fontSize: 16 },
+  menuRowText: { color: "#e0e0e0", fontSize: 15, fontWeight: "500" },
+  menuDivider: { height: 1, backgroundColor: "#1e1e1e", marginHorizontal: 14 },
+
+  // ── Full-screen modal ──
+  fsContainer: {
+    flex: 1,
+    backgroundColor: "#1a1a1a",
+  },
+  fsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    paddingTop: 12,
-    borderWidth: 1, borderColor: '#222', borderBottomWidth: 0,
+    marginBottom: 12,
   },
-  modalHandle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: '#333', alignSelf: 'center', marginBottom: 16,
+  fsHeaderBtn: { padding: 4 },
+  fsCloseCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#2e2e2e",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  modalPreview: { alignItems: 'center', marginBottom: 16 },
-  previewIcon: {
-    width: 80, height: 80, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center',
+  fsCloseText: { color: "#aaa", fontSize: 14, fontWeight: "600" },
+  fsSaveCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  modalTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 4 },
-  modalSubtitle: { color: '#555', fontSize: 13, marginBottom: 16 },
-  modalInput: {
-    backgroundColor: '#1c1c1c', borderRadius: 12,
-    color: '#f0f0f0', fontSize: 16,
-    paddingHorizontal: 16, paddingVertical: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: '#2a2a2a',
+  fsSaveText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+
+  fsPreviewWrap: { alignItems: "center", marginTop: 8, marginBottom: 20 },
+  fsPreviewOuter: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  pickerLabel: {
-    color: '#555', fontSize: 11, fontWeight: '600',
-    textTransform: 'uppercase', letterSpacing: 0.5,
-    marginBottom: 8,
+  fsPreviewEmoji: { fontSize: 48 },
+
+  fsNameInput: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 14,
+    color: "#f0f0f0",
+    fontSize: 18,
+    fontWeight: "500",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginBottom: 20,
   },
-  colorRow: { flexDirection: 'row', gap: 10, marginBottom: 16, flexWrap: 'wrap' },
-  colorDot: {
-    width: 32, height: 32, borderRadius: 16,
-    borderWidth: 2, borderColor: 'transparent',
+
+  fsColorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 20,
+    justifyContent: "center",
   },
-  colorDotSelected: { borderColor: '#fff', transform: [{ scale: 1.2 }] },
-  emojiScroll: { maxHeight: 100, marginBottom: 16 },
-  emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  emojiBtn: {
-    width: 44, height: 44, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#1c1c1c', borderWidth: 2, borderColor: 'transparent',
+  fsColorDot: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 3,
+    borderColor: "transparent",
   },
-  emojiText: { fontSize: 22 },
-  modalActions: { flexDirection: 'row', gap: 10 },
-  modalBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  modalBtnCancel: {
-    backgroundColor: '#1c1c1c', borderWidth: 1, borderColor: '#2a2a2a',
+  fsColorDotSelected: {
+    borderWidth: 3,
+    transform: [{ scale: 1.15 }],
   },
-  modalBtnCancelText: { color: '#888', fontSize: 15, fontWeight: '600' },
-  modalBtnSaveText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+  fsIconGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    justifyContent: "center",
+  },
+  fsIconBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#2c2c2c",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  fsIconEmoji: { fontSize: 24 },
 });

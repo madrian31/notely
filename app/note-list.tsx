@@ -144,6 +144,7 @@ export default function NoteList() {
         )}
       />
 
+
       {/* Options modal */}
       <Modal
         transparent
