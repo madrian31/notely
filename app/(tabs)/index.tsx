@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage } from "./storage";
+import { Storage, STORAGE_KEYS } from "./storage";
 
 export type Journal = {
   id: string;
@@ -146,7 +146,7 @@ export default function HomeScreen() {
 
   const loadJournals = async () => {
     try {
-      const stored = await Storage.getItem("journals");
+      const stored = await Storage.getItem(STORAGE_KEYS.journals);
       const list: Journal[] = stored ? JSON.parse(stored) : [];
       setJournals(list);
 
@@ -155,7 +155,7 @@ export default function HomeScreen() {
       const counts: Record<string, number> = {};
 
       for (const j of list) {
-        const notesRaw = await Storage.getItem(`notes_${j.id}`);
+        const notesRaw = await Storage.getItem(STORAGE_KEYS.notes(j.id));
         const notes: Note[] = notesRaw ? JSON.parse(notesRaw) : [];
         counts[j.id] = notes.length;
         noteCount += notes.length;
@@ -194,7 +194,7 @@ export default function HomeScreen() {
     };
     const updated = [...journals, newJournal];
     setJournals(updated);
-    await Storage.setItem("journals", JSON.stringify(updated));
+    await Storage.setItem(STORAGE_KEYS.journals, JSON.stringify(updated));
     setModalVisible(false);
   };
 
@@ -208,9 +208,9 @@ export default function HomeScreen() {
   const deleteJournal = async (journal: Journal) => {
     const updated = journals.filter((j) => j.id !== journal.id);
     setJournals(updated);
-    await Storage.setItem("journals", JSON.stringify(updated));
+    await Storage.setItem(STORAGE_KEYS.journals, JSON.stringify(updated));
     // Also remove its notes
-    await Storage.removeItem(`notes_${journal.id}`);
+    await Storage.removeItem(STORAGE_KEYS.notes(journal.id));
     setMenuVisible(false);
     setMenuJournal(null);
   };
@@ -235,7 +235,7 @@ export default function HomeScreen() {
         : j,
     );
     setJournals(updated);
-    await Storage.setItem("journals", JSON.stringify(updated));
+    await Storage.setItem(STORAGE_KEYS.journals, JSON.stringify(updated));
     setEditModalVisible(false);
     setEditingJournal(null);
   };

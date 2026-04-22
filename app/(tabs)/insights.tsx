@@ -2,7 +2,7 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage } from "./storage";
+import { Storage, STORAGE_KEYS } from "./storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1050,11 +1050,11 @@ export default function InsightsScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const stored = await Storage.getItem("journals");
+      const stored = await Storage.getItem(STORAGE_KEYS.journals);
       const journals: Journal[] = stored ? JSON.parse(stored) : [];
       const allNotes: Note[] = [];
       for (const j of journals) {
-        const raw = await Storage.getItem(`notes_${j.id}`);
+        const raw = await Storage.getItem(STORAGE_KEYS.notes(j.id));
         const notes: Note[] = raw ? JSON.parse(raw) : [];
         allNotes.push(...notes);
       }

@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage } from "./(tabs)/storage";
+import { Storage, STORAGE_KEYS } from "./(tabs)/storage";
 
 type Note = {
   id: string;
@@ -32,7 +32,7 @@ export default function NoteList() {
   const journalName = asString(params.journalName, "Journal");
   const journalColor = asString(params.journalColor, "#c084fc");
 
-  const storageKey = `notes_${journalId}`;
+  const storageKey = STORAGE_KEYS.notes(journalId);
 
   const [notes, setNotes] = useState<Note[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);

@@ -1,71 +1,89 @@
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const FILE_URI = FileSystem.documentDirectory + 'notes.json';
+// ─── Storage Key Constants ─────────────────────────────────────────────────────
+// Centralized para walang typo sa buong codebase.
+// Gamitin lagi ito imbes na raw strings.
 
-const isWeb = Platform.OS === 'web';
+export const STORAGE_KEYS = {
+  journals: "journals",
+  notes: (journalId: string) => `notes_${journalId}`,
+};
+
+// ─── Size Guard ────────────────────────────────────────────────────────────────
+// Ang AsyncStorage ay may 6MB limit sa Android.
+// Bago mag-save, chine-check natin kung hindi pa lalampas.
+
+const MAX_STORAGE_BYTES = 5 * 1024 * 1024; // 5MB — may buffer pa para sa 6MB limit
+
+async function getTotalStorageSize(): Promise<number> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const stores = await AsyncStorage.multiGet(keys as string[]);
+    return stores.reduce((total, [, value]) => {
+      return total + (value ? new Blob([value]).size : 0);
+    }, 0);
+  } catch {
+    return 0;
+  }
+}
+
+// ─── Storage API ──────────────────────────────────────────────────────────────
 
 export const Storage = {
   async getItem(key: string): Promise<string | null> {
     try {
-      if (isWeb) {
-        return localStorage.getItem(key);
-      }
-
-      console.log('[Storage] getItem - FILE_URI:', FILE_URI);
-      const info = await FileSystem.getInfoAsync(FILE_URI);
-      console.log('[Storage] getItem - file exists:', info.exists);
-
-      if (!info.exists) return null;
-      const content = await FileSystem.readAsStringAsync(FILE_URI);
-      console.log('[Storage] getItem - content:', content);
-
-      const parsed = JSON.parse(content);
-      return parsed[key] ?? null;
+      return await AsyncStorage.getItem(key);
     } catch (err) {
-      console.log('[Storage] getItem ERROR:', err);
+      console.log("[Storage] getItem ERROR:", err);
       return null;
     }
   },
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(
+    key: string,
+    value: string,
+  ): Promise<{ ok: boolean; reason?: string }> {
     try {
-      if (isWeb) {
-        localStorage.setItem(key, value);
-        return;
+      // Size guard — check kung hindi pa lalampas ng limit
+      const incomingSize = new Blob([value]).size;
+      const currentSize = await getTotalStorageSize();
+
+      if (currentSize + incomingSize > MAX_STORAGE_BYTES) {
+        const usedMB = (currentSize / 1024 / 1024).toFixed(1);
+        console.warn(`[Storage] Size limit warning: ${usedMB}MB used`);
+        return {
+          ok: false,
+          reason: `Storage is almost full (${usedMB}MB used). Please delete some entries to continue saving.`,
+        };
       }
 
-      console.log('[Storage] setItem - key:', key, 'value:', value);
-
-      let existing: Record<string, string> = {};
-      const info = await FileSystem.getInfoAsync(FILE_URI);
-      if (info.exists) {
-        const content = await FileSystem.readAsStringAsync(FILE_URI);
-        existing = JSON.parse(content);
-      }
-      existing[key] = value;
-      await FileSystem.writeAsStringAsync(FILE_URI, JSON.stringify(existing));
-      console.log('[Storage] setItem - saved successfully!');
+      await AsyncStorage.setItem(key, value);
+      return { ok: true };
     } catch (err) {
-      console.log('[Storage] setItem ERROR:', err);
+      console.log("[Storage] setItem ERROR:", err);
+      return { ok: false, reason: "Failed to save. Please try again." };
     }
   },
 
   async removeItem(key: string): Promise<void> {
     try {
-      if (isWeb) {
-        localStorage.removeItem(key);
-        return;
-      }
-
-      const info = await FileSystem.getInfoAsync(FILE_URI);
-      if (!info.exists) return;
-      const content = await FileSystem.readAsStringAsync(FILE_URI);
-      const existing = JSON.parse(content);
-      delete existing[key];
-      await FileSystem.writeAsStringAsync(FILE_URI, JSON.stringify(existing));
+      await AsyncStorage.removeItem(key);
     } catch (err) {
-      console.log('[Storage] removeItem ERROR:', err);
+      console.log("[Storage] removeItem ERROR:", err);
     }
+  },
+
+  // Utility: makita kung gaano na kalaki ang ginamit na storage
+  async getStorageInfo(): Promise<{
+    usedMB: string;
+    usedBytes: number;
+    limitMB: number;
+  }> {
+    const usedBytes = await getTotalStorageSize();
+    return {
+      usedBytes,
+      usedMB: (usedBytes / 1024 / 1024).toFixed(2),
+      limitMB: MAX_STORAGE_BYTES / 1024 / 1024,
+    };
   },
 };

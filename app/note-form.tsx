@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage } from "./(tabs)/storage";
+import { Storage, STORAGE_KEYS } from "./(tabs)/storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -197,7 +197,7 @@ export default function NoteForm() {
   const journalColor = asString(params.journalColor, "#c084fc");
 
   // Each journal has its own storage key
-  const storageKey = `notes_${journalId}`;
+  const storageKey = STORAGE_KEYS.notes(journalId);
 
   const [title, setTitle] = useState("");
   const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
