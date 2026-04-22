@@ -242,7 +242,7 @@ export default function HomeScreen() {
 
   const goToNoteList = (item: Journal) => {
     router.push(
-      `/note-list?journalId=${item.id}&journalName=${encodeURIComponent(item.name)}&journalColor=${encodeURIComponent(item.color)}` as any,
+      `../note-list?journalId=${item.id}&journalName=${encodeURIComponent(item.name)}&journalColor=${encodeURIComponent(item.color)}` as any,
     );
   };
 

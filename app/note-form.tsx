@@ -31,12 +31,22 @@ export type Segment = {
   align?: "left" | "center" | "right";
 };
 
+type EmotionEntry = {
+  label: string;
+  intensity: 1 | 2 | 3; // 1=mild, 2=moderate, 3=strong
+  color: string;
+  valence: number; // 1-5 (1=very unpleasant, 5=very pleasant)
+};
+
 type Note = {
   id: string;
   title: string;
   text: string;
   segments: Segment[];
   date: string;
+  emotion?: EmotionEntry;
+  activities?: string[];
+  tags?: string[];
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -91,6 +101,63 @@ const HEADING_WEIGHT: Record<string, any> = {
   h2: "600",
   h3: "600",
 };
+
+// ─── Emotion wheel data ───────────────────────────────────────────────────────
+
+type EmotionDef = {
+  valence: number;
+  label: string;
+  color: string;
+  words: [string, string, string]; // mild, moderate, strong
+};
+
+const EMOTIONS: EmotionDef[] = [
+  {
+    valence: 1,
+    label: "Very Unpleasant",
+    color: "#ef4444",
+    words: ["Uneasy", "Distressed", "Anguished"],
+  },
+  {
+    valence: 2,
+    label: "Unpleasant",
+    color: "#f97316",
+    words: ["Displeased", "Frustrated", "Miserable"],
+  },
+  {
+    valence: 3,
+    label: "Neutral",
+    color: "#a3a3a3",
+    words: ["Indifferent", "Neutral", "Numb"],
+  },
+  {
+    valence: 4,
+    label: "Pleasant",
+    color: "#34d399",
+    words: ["Content", "Happy", "Joyful"],
+  },
+  {
+    valence: 5,
+    label: "Very Pleasant",
+    color: "#3b82f6",
+    words: ["Pleased", "Elated", "Ecstatic"],
+  },
+];
+
+const INTENSITY_LABELS = ["Slightly", "Moderately", "Strongly"] as const;
+
+// ─── Activity data ────────────────────────────────────────────────────────────
+
+const ACTIVITIES = [
+  { id: "stationary", label: "Stationary", emoji: "🪑" },
+  { id: "eating", label: "Eating", emoji: "🍽️" },
+  { id: "walking", label: "Walking", emoji: "🚶" },
+  { id: "running", label: "Running", emoji: "🏃" },
+  { id: "biking", label: "Biking", emoji: "🚴" },
+  { id: "automotive", label: "Automotive", emoji: "🚗" },
+  { id: "flying", label: "Flying", emoji: "✈️" },
+  { id: "none", label: "None", emoji: "—" },
+];
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10);
@@ -147,16 +214,25 @@ export default function NoteForm() {
     align: "left",
   });
   const [picker, setPicker] = useState<
-    "fontSize" | "color" | "highlight" | "heading" | "align" | null
+    "fontSize" | "color" | "highlight" | "heading" | "align" | "mood" | null
   >(null);
   const [kbHeight, setKbHeight] = useState(0);
   const [isSavingUI, setIsSavingUI] = useState(false);
+  const [emotion, setEmotion] = useState<EmotionEntry | undefined>(undefined);
+  const [activities, setActivities] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  // Emotion picker sub-state
+  const [selectedValence, setSelectedValence] = useState<number | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteIdRef = useRef<string | null>(noteId || null);
   const hasChanges = useRef(false);
   const isSaving = useRef(false);
   const latestRef = useRef({ title: "", segments: [defaultSegment()] });
+  const emotionRef = useRef<EmotionEntry | undefined>(undefined);
+  const activitiesRef = useRef<string[]>([]);
+  const tagsRef = useRef<string[]>([]);
   const segsRef = useRef<Segment[]>([defaultSegment()]);
   const inputRefs = useRef<Record<string, TextInput | null>>({});
 
@@ -216,6 +292,12 @@ export default function NoteForm() {
       setSegments(segs);
       segsRef.current = segs;
       latestRef.current = { title: existing.title, segments: segs };
+      if (existing.emotion) {
+        setEmotion(existing.emotion);
+        setSelectedValence(existing.emotion.valence);
+      }
+      if (existing.activities) setActivities(existing.activities);
+      if (existing.tags) setTags(existing.tags);
     } catch (err) {
       console.log("loadNote error:", err);
     }
@@ -252,7 +334,15 @@ export default function NoteForm() {
       if (noteIdRef.current) {
         updated = parsed.map((n) =>
           n.id === noteIdRef.current
-            ? { ...n, title: cleanTitle, text: plainText, segments }
+            ? {
+                ...n,
+                title: cleanTitle,
+                text: plainText,
+                segments,
+                emotion: emotionRef.current,
+                activities: activitiesRef.current,
+                tags: tagsRef.current,
+              }
             : n,
         );
       } else {
@@ -265,6 +355,9 @@ export default function NoteForm() {
             text: plainText,
             segments,
             date: new Date().toISOString(),
+            emotion: emotionRef.current,
+            activities: activitiesRef.current,
+            tags: tagsRef.current,
           },
           ...parsed,
         ];
@@ -325,16 +418,14 @@ export default function NoteForm() {
     const newSegs: Segment[] = [
       ...before,
       { ...cur, text: parts[0] },
-      ...parts
-        .slice(1)
-        .map((p) =>
-          defaultSegment({
-            text: p,
-            fontSize: cur.fontSize,
-            color: cur.color,
-            align: cur.align,
-          }),
-        ),
+      ...parts.slice(1).map((p) =>
+        defaultSegment({
+          text: p,
+          fontSize: cur.fontSize,
+          color: cur.color,
+          align: cur.align,
+        }),
+      ),
       ...after,
     ];
     pushSegments(newSegs);
@@ -385,6 +476,52 @@ export default function NoteForm() {
     key: "bold" | "italic" | "underline" | "strikethrough",
   ) => {
     applyFmt({ [key]: !fmt[key] });
+  };
+
+  // Emotion helpers
+  const setEmotionEntry = (entry: EmotionEntry | undefined) => {
+    emotionRef.current = entry;
+    setEmotion(entry);
+    triggerSave();
+  };
+
+  const confirmEmotion = (valence: number, intensity: 1 | 2 | 3) => {
+    const def = EMOTIONS.find((e) => e.valence === valence)!;
+    setEmotionEntry({
+      valence,
+      intensity,
+      label: def.words[intensity - 1],
+      color: def.color,
+    });
+    setPicker(null);
+  };
+
+  // Activity helpers
+  const toggleActivity = (id: string) => {
+    const next = activitiesRef.current.includes(id)
+      ? activitiesRef.current.filter((a) => a !== id)
+      : [...activitiesRef.current, id];
+    activitiesRef.current = next;
+    setActivities(next);
+    triggerSave();
+  };
+
+  // Tag helpers
+  const addTag = (raw: string) => {
+    const tag = raw.trim().replace(/^#/, "");
+    if (!tag || tagsRef.current.includes(tag)) return;
+    const next = [...tagsRef.current, tag];
+    tagsRef.current = next;
+    setTags(next);
+    setTagInput("");
+    triggerSave();
+  };
+
+  const removeTag = (tag: string) => {
+    const next = tagsRef.current.filter((t) => t !== tag);
+    tagsRef.current = next;
+    setTags(next);
+    triggerSave();
   };
 
   const toolbarBottom = kbHeight > 0 ? kbHeight : insets.bottom;
@@ -548,6 +685,18 @@ export default function NoteForm() {
             }
             onPress={() => setPicker("align")}
           />
+          <Divider />
+          <TouchableOpacity
+            onPress={() => setPicker("mood")}
+            style={[
+              s.toolBtn,
+              emotion
+                ? { borderBottomWidth: 3, borderBottomColor: emotion.color }
+                : null,
+            ]}
+          >
+            <Text style={s.toolBtnTxt}>{emotion ? "😊" : "😶"}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -681,6 +830,220 @@ export default function NoteForm() {
           />
         ))}
       </BottomSheet>
+      {/* Tags row above toolbar (only shown when tags exist or user is typing) */}
+      {(tags.length > 0 || tagInput.length > 0) && (
+        <View style={[s.tagsRow, { bottom: toolbarBottom + 50 }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 6, alignItems: "center" }}
+          >
+            {tags.map((tag) => (
+              <TouchableOpacity
+                key={tag}
+                onPress={() => removeTag(tag)}
+                style={s.tagPill}
+              >
+                <Text style={s.tagPillText}>#{tag} ✕</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Mood + Activity + Tags modal */}
+      <Modal
+        transparent
+        visible={picker === "mood"}
+        animationType="slide"
+        onRequestClose={() => setPicker(null)}
+      >
+        <TouchableOpacity
+          style={s.overlay}
+          activeOpacity={1}
+          onPress={() => setPicker(null)}
+        >
+          <TouchableOpacity activeOpacity={1} style={s.moodSheet}>
+            <View style={s.sheetHandle} />
+            <View style={s.sheetHeader}>
+              <Text style={s.sheetTitle}>How are you feeling?</Text>
+              <TouchableOpacity onPress={() => setPicker(null)}>
+                <Text style={s.sheetClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={{ maxHeight: 520 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              {/* Emotion wheel */}
+              <Text style={s.moodSectionLabel}>MOOD</Text>
+              <View style={s.emotionRow}>
+                {EMOTIONS.map((e) => (
+                  <TouchableOpacity
+                    key={e.valence}
+                    onPress={() =>
+                      setSelectedValence(
+                        selectedValence === e.valence ? null : e.valence,
+                      )
+                    }
+                    style={[
+                      s.emotionBtn,
+                      { borderColor: e.color },
+                      selectedValence === e.valence && {
+                        backgroundColor: e.color + "33",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[s.emotionDot, { backgroundColor: e.color }]}
+                    />
+                    <Text
+                      style={[
+                        s.emotionBtnLabel,
+                        {
+                          color:
+                            selectedValence === e.valence ? e.color : "#666",
+                        },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {e.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Intensity selector */}
+              {selectedValence !== null && (
+                <View style={s.intensitySection}>
+                  <Text style={s.moodSectionLabel}>INTENSITY</Text>
+                  {([1, 2, 3] as const).map((i) => {
+                    const def = EMOTIONS.find(
+                      (e) => e.valence === selectedValence,
+                    )!;
+                    const isActive =
+                      emotion?.valence === selectedValence &&
+                      emotion?.intensity === i;
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => confirmEmotion(selectedValence, i)}
+                        style={[
+                          s.intensityRow,
+                          isActive && { backgroundColor: def.color + "22" },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            s.intensityDot,
+                            {
+                              backgroundColor: def.color,
+                              opacity: 0.3 + i * 0.23,
+                            },
+                          ]}
+                        />
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={[
+                              s.intensityLabel,
+                              isActive && { color: def.color },
+                            ]}
+                          >
+                            {INTENSITY_LABELS[i - 1]} — {def.words[i - 1]}
+                          </Text>
+                        </View>
+                        {isActive && (
+                          <Text style={{ color: def.color }}>✓</Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {emotion?.valence === selectedValence && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEmotionEntry(undefined);
+                        setSelectedValence(null);
+                      }}
+                      style={s.clearEmotion}
+                    >
+                      <Text style={s.clearEmotionText}>Clear mood</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* Activities */}
+              <Text style={[s.moodSectionLabel, { marginTop: 20 }]}>
+                ACTIVITY
+              </Text>
+              <View style={s.activityGrid}>
+                {ACTIVITIES.map((act) => {
+                  const active = activities.includes(act.id);
+                  return (
+                    <TouchableOpacity
+                      key={act.id}
+                      onPress={() => toggleActivity(act.id)}
+                      style={[
+                        s.activityBtn,
+                        active && {
+                          backgroundColor: journalColor + "33",
+                          borderColor: journalColor,
+                        },
+                      ]}
+                    >
+                      <Text style={s.activityEmoji}>{act.emoji}</Text>
+                      <Text
+                        style={[
+                          s.activityLabel,
+                          active && { color: journalColor },
+                        ]}
+                      >
+                        {act.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Tags */}
+              <Text style={[s.moodSectionLabel, { marginTop: 20 }]}>TAGS</Text>
+              <View style={s.tagInputRow}>
+                <TextInput
+                  style={s.tagTextInput}
+                  placeholder="Add tag..."
+                  placeholderTextColor="#444"
+                  value={tagInput}
+                  onChangeText={setTagInput}
+                  onSubmitEditing={() => addTag(tagInput)}
+                  returnKeyType="done"
+                  selectionColor={journalColor}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  onPress={() => addTag(tagInput)}
+                  style={[s.tagAddBtn, { backgroundColor: journalColor }]}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>Add</Text>
+                </TouchableOpacity>
+              </View>
+              {tags.length > 0 && (
+                <View style={s.tagPillsWrap}>
+                  {tags.map((tag) => (
+                    <TouchableOpacity
+                      key={tag}
+                      onPress={() => removeTag(tag)}
+                      style={s.tagPill}
+                    >
+                      <Text style={s.tagPillText}>#{tag} ✕</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -908,4 +1271,111 @@ const s = StyleSheet.create({
     borderBottomColor: "#1a1a1a",
   },
   sheetRowTxt: { color: "#bbb", fontSize: 15, flex: 1 },
+  // Mood sheet
+  moodSheet: {
+    backgroundColor: "#141414",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    maxHeight: "85%",
+  },
+  moodSectionLabel: {
+    color: "#444",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginHorizontal: 18,
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  emotionRow: {
+    flexDirection: "row",
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  emotionBtn: {
+    flex: 1,
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#2a2a2a",
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    gap: 6,
+  },
+  emotionDot: { width: 12, height: 12, borderRadius: 6 },
+  emotionBtnLabel: { fontSize: 10, fontWeight: "600", textAlign: "center" },
+  intensitySection: { marginTop: 12 },
+  intensityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1a1a1a",
+  },
+  intensityDot: { width: 10, height: 10, borderRadius: 5 },
+  intensityLabel: { color: "#bbb", fontSize: 15 },
+  clearEmotion: { paddingHorizontal: 18, paddingTop: 10 },
+  clearEmotionText: { color: "#555", fontSize: 13 },
+  activityGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  activityBtn: {
+    width: "22%",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#2a2a2a",
+    paddingVertical: 10,
+    gap: 4,
+  },
+  activityEmoji: { fontSize: 22 },
+  activityLabel: { fontSize: 10, color: "#555", fontWeight: "600" },
+  tagInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 18,
+    gap: 8,
+  },
+  tagTextInput: {
+    flex: 1,
+    backgroundColor: "#1e1e1e",
+    color: "#f0f0f0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 14,
+  },
+  tagAddBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  tagPillsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: 18,
+    marginTop: 10,
+    gap: 6,
+  },
+  tagPill: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  tagPillText: { color: "#888", fontSize: 12 },
+  tagsRow: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#111",
+  },
 });
