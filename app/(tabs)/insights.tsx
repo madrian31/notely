@@ -591,14 +591,16 @@ function ActivityCalendar({
                   </Text>
                 </View>
 
-                {/* Entry dot — single filled dot, always same size, shown when has entry */}
-                {count > 0 && !isToday && (
+                {/* Entry dot — white if today (over ACCENT bg), ACCENT if normal day */}
+                {count > 0 && (
                   <View
                     style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: ACCENT,
+                      width: 5,
+                      height: 5,
+                      borderRadius: 2.5,
+                      backgroundColor: isToday
+                        ? "rgba(255,255,255,0.85)"
+                        : ACCENT,
                     }}
                   />
                 )}
