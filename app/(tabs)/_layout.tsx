@@ -1,33 +1,49 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
+import { Tabs } from "expo-router";
+import { Text } from "react-native";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
-
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
+function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="note-list" />
-        <Stack.Screen name="note-form" />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>{emoji}</Text>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: "#0a0a0a",
+          borderTopColor: "#1a1a1a",
+          borderTopWidth: 1,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 8,
+        },
+        tabBarActiveTintColor: "#c084fc",
+        tabBarInactiveTintColor: "#444",
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          letterSpacing: 0.3,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Journals",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="📔" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: "Insights",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="📊" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen name="explore" options={{ href: null }} />
+    </Tabs>
   );
 }
