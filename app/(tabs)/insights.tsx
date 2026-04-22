@@ -1,6 +1,12 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Storage } from "./storage";
 
@@ -34,8 +40,11 @@ type InsightData = {
   avgWordsPerEntry: number;
   currentStreak: number;
   longestStreak: number;
+  longestWeeklyStreak: number;
+  daysJournaled: number;
+  entriesThisYear: number;
   last7Days: { label: string; count: number; date: string }[];
-  last4Weeks: { label: string; count: number }[];
+  calendarYear: { date: string; count: number }[];
   bestDayOfWeek: string;
   mostActiveHour: number | null;
   topActivities: { id: string; emoji: string; label: string; count: number }[];
@@ -67,8 +76,34 @@ const EMOTION_META = [
 ];
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const MONTH_NAMES = [
+  "J",
+  "F",
+  "M",
+  "A",
+  "M",
+  "J",
+  "J",
+  "A",
+  "S",
+  "O",
+  "N",
+  "D",
+];
+const FULL_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function toDateStr(d: Date) {
   return d.toISOString().split("T")[0];
@@ -83,22 +118,25 @@ function computeInsights(allNotes: Note[]): InsightData {
   const avgWordsPerEntry =
     totalEntries > 0 ? Math.round(totalWords / totalEntries) : 0;
 
-  // Sort notes by date ascending
   const sorted = [...allNotes].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
 
-  // Unique days with entries
   const entryDays = new Set(sorted.map((n) => toDateStr(new Date(n.date))));
+  const daysJournaled = entryDays.size;
+
+  // Entries this year
+  const thisYear = new Date().getFullYear();
+  const entriesThisYear = allNotes.filter(
+    (n) => new Date(n.date).getFullYear() === thisYear,
+  ).length;
 
   // Streak calculation
   let currentStreak = 0;
   let longestStreak = 0;
   let streak = 0;
   const today = toDateStr(new Date());
-  const yesterday = toDateStr(new Date(Date.now() - 86400000));
 
-  // Walk backwards from today
   let checkDay = entryDays.has(today)
     ? new Date()
     : new Date(Date.now() - 86400000);
@@ -110,7 +148,6 @@ function computeInsights(allNotes: Note[]): InsightData {
     }
   }
 
-  // Longest streak
   const dayList = Array.from(entryDays).sort();
   streak = 0;
   for (let i = 0; i < dayList.length; i++) {
@@ -131,7 +168,18 @@ function computeInsights(allNotes: Note[]): InsightData {
   if (streak > longestStreak) longestStreak = streak;
   if (currentStreak > longestStreak) longestStreak = currentStreak;
 
-  // Last 7 days bar chart
+  // Longest weekly streak
+  let longestWeeklyStreak = 0;
+  let weekStreak = 0;
+  const weekSet = new Set<string>();
+  allNotes.forEach((n) => {
+    const d = new Date(n.date);
+    const week = `${d.getFullYear()}-W${Math.ceil((d.getDate() + new Date(d.getFullYear(), d.getMonth(), 1).getDay()) / 7)}`;
+    weekSet.add(week);
+  });
+  longestWeeklyStreak = weekSet.size;
+
+  // Last 7 days
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -144,18 +192,15 @@ function computeInsights(allNotes: Note[]): InsightData {
     };
   });
 
-  // Last 4 weeks
-  const last4Weeks = Array.from({ length: 4 }, (_, i) => {
-    const weekEnd = new Date();
-    weekEnd.setDate(weekEnd.getDate() - i * 7);
-    const weekStart = new Date(weekEnd);
-    weekStart.setDate(weekStart.getDate() - 6);
-    const count = allNotes.filter((n) => {
-      const d = new Date(n.date);
-      return d >= weekStart && d <= weekEnd;
-    }).length;
-    return { label: `W${4 - i}`, count };
-  }).reverse();
+  // Calendar for this year — entries per month
+  const calendarYear = Array.from({ length: 12 }, (_, m) => {
+    const count = allNotes.filter(
+      (n) =>
+        new Date(n.date).getFullYear() === thisYear &&
+        new Date(n.date).getMonth() === m,
+    ).length;
+    return { date: `${thisYear}-${String(m + 1).padStart(2, "0")}`, count };
+  });
 
   // Best day of week
   const dayCounts = Array(7).fill(0);
@@ -205,8 +250,11 @@ function computeInsights(allNotes: Note[]): InsightData {
     avgWordsPerEntry,
     currentStreak,
     longestStreak,
+    longestWeeklyStreak,
+    daysJournaled,
+    entriesThisYear,
     last7Days,
-    last4Weeks,
+    calendarYear,
     bestDayOfWeek,
     mostActiveHour,
     topActivities,
@@ -221,76 +269,45 @@ function formatHour(h: number) {
   return `${h - 12} PM`;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-function SectionTitle({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <View style={{ marginBottom: 12 }}>
-      <Text style={s.sectionTitle}>{title}</Text>
-      {subtitle && <Text style={s.sectionSubtitle}>{subtitle}</Text>}
-    </View>
-  );
-}
-
-function StatCard({
-  icon,
-  value,
-  label,
-  color,
-}: {
-  icon: string;
-  value: string;
-  label: string;
-  color?: string;
-}) {
-  return (
-    <View style={s.statCard}>
-      <Text style={s.statIcon}>{icon}</Text>
-      <Text style={[s.statValue, color ? { color } : null]}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function BarChart({
+// ─── Calendar Strip (year overview, month bars like Apple Journal) ────────────
+function YearCalendarStrip({
   data,
   accent,
 }: {
-  data: { label: string; count: number; date?: string }[];
+  data: { date: string; count: number }[];
   accent: string;
 }) {
   const max = Math.max(...data.map((d) => d.count), 1);
-  const today = toDateStr(new Date());
-
   return (
-    <View style={s.barChart}>
-      {data.map((d, i) => {
-        const isToday = d.date === today;
-        const height = Math.max((d.count / max) * 80, d.count > 0 ? 6 : 2);
+    <View style={cal.wrap}>
+      {data.map((item, i) => {
+        const month = parseInt(item.date.split("-")[1]) - 1;
+        const height =
+          item.count > 0 ? Math.max((item.count / max) * 52, 8) : 4;
+        const hasEntries = item.count > 0;
         return (
-          <View key={i} style={s.barCol}>
-            {d.count > 0 && <Text style={s.barCount}>{d.count}</Text>}
-            <View
-              style={[
-                s.bar,
-                {
-                  height,
-                  backgroundColor: isToday
-                    ? accent
-                    : d.count > 0
-                      ? accent + "88"
-                      : "#1e1e1e",
-                },
-              ]}
-            />
-            <Text style={[s.barLabel, isToday && { color: accent }]}>
-              {d.label}
+          <View key={i} style={cal.col}>
+            <View style={cal.barWrap}>
+              <View
+                style={[
+                  cal.bar,
+                  {
+                    height,
+                    backgroundColor: hasEntries ? accent : "#2a2a2a",
+                    opacity: hasEntries ? 0.5 + (item.count / max) * 0.5 : 1,
+                  },
+                ]}
+              />
+            </View>
+            {item.count > 0 && (
+              <Text style={[cal.barCount, { color: accent }]}>
+                {item.count}
+              </Text>
+            )}
+            <Text style={[cal.label, hasEntries && { color: "#888" }]}>
+              {MONTH_NAMES[month]}
             </Text>
           </View>
         );
@@ -299,31 +316,332 @@ function BarChart({
   );
 }
 
-function MoodBar({
-  item,
-  total,
+const cal = StyleSheet.create({
+  wrap: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingTop: 8,
+    height: 90,
+  },
+  col: { flex: 1, alignItems: "center", gap: 3 },
+  barWrap: { height: 52, justifyContent: "flex-end" },
+  bar: { width: 14, borderRadius: 4, minHeight: 4 },
+  barCount: { fontSize: 8, fontWeight: "700" },
+  label: { color: "#3a3a3a", fontSize: 9, fontWeight: "600" },
+});
+
+// ─── Streak Section (Apple Journal style card) ───────────────────────────────
+function StreakCard({
+  currentStreak,
+  longestStreak,
+  longestWeeklyStreak,
+  daysJournaled,
+  entriesThisYear,
 }: {
-  item: { label: string; color: string; count: number };
-  total: number;
+  currentStreak: number;
+  longestStreak: number;
+  longestWeeklyStreak: number;
+  daysJournaled: number;
+  entriesThisYear: number;
 }) {
-  const pct = total > 0 ? (item.count / total) * 100 : 0;
+  const hasStreak = currentStreak > 0;
+
   return (
-    <View style={s.moodBarRow}>
-      <Text style={s.moodBarLabel}>{item.label}</Text>
-      <View style={s.moodBarTrack}>
-        <View
-          style={[
-            s.moodBarFill,
-            { width: `${pct}%` as any, backgroundColor: item.color },
-          ]}
-        />
+    <View style={sc.card}>
+      {/* Left: current streak big number */}
+      <View style={sc.left}>
+        <Text style={sc.bigNum}>{currentStreak}</Text>
+        <View style={sc.dayStreakRow}>
+          <Text style={sc.dayWord}>Days</Text>
+          <Text style={sc.streakWord}> Streak</Text>
+        </View>
+        {!hasStreak && (
+          <Text style={sc.hint}>
+            Journal at least once{"\n"}a week to build a streak.
+          </Text>
+        )}
       </View>
-      <Text style={[s.moodBarPct, { color: item.color }]}>
-        {Math.round(pct)}%
-      </Text>
+
+      {/* Right: stats */}
+      <View style={sc.right}>
+        <View style={sc.statRow}>
+          <View style={sc.statIconWrap}>
+            <Text style={sc.statIconText}>📅</Text>
+          </View>
+          <View>
+            <Text style={sc.statNum}>{entriesThisYear}</Text>
+            <Text style={sc.statLabel}>Entries This Year</Text>
+          </View>
+        </View>
+        <View style={sc.divider} />
+        <View style={sc.statRow}>
+          <View style={sc.statIconWrap}>
+            <Text style={sc.statIconText}>🗓️</Text>
+          </View>
+          <View>
+            <Text style={sc.statNum}>{daysJournaled}</Text>
+            <Text style={sc.statLabel}>Days Journaled</Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
+
+const sc = StyleSheet.create({
+  card: {
+    backgroundColor: "#3d2d6e",
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    overflow: "hidden",
+  },
+  left: { flex: 1, paddingRight: 16 },
+  bigNum: {
+    color: "#fff",
+    fontSize: 64,
+    fontWeight: "800",
+    lineHeight: 68,
+    letterSpacing: -2,
+  },
+  dayStreakRow: { flexDirection: "row", alignItems: "baseline", marginTop: 2 },
+  dayWord: { color: "#c084fc", fontSize: 16, fontWeight: "700" },
+  streakWord: { color: "#a78abf", fontSize: 16, fontWeight: "400" },
+  hint: { color: "#a78abf", fontSize: 11, marginTop: 8, lineHeight: 16 },
+  right: { gap: 12 },
+  statRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  statIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statIconText: { fontSize: 16 },
+  statNum: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  statLabel: { color: "#c4aee0", fontSize: 11, marginTop: 1 },
+  divider: { height: 1, backgroundColor: "rgba(255,255,255,0.1)" },
+});
+
+// ─── Streaks Detail Card (Longest Daily + Weekly) ─────────────────────────────
+function StreakStatsCard({
+  longestStreak,
+  longestWeeklyStreak,
+}: {
+  longestStreak: number;
+  longestWeeklyStreak: number;
+}) {
+  return (
+    <View style={ss.row}>
+      <View style={ss.card}>
+        <Text style={ss.label}>Longest{"\n"}Daily Streak</Text>
+        <Text style={ss.num}>{longestStreak}</Text>
+        <Text style={[ss.unit, { color: "#ef4444" }]}>Days</Text>
+      </View>
+      <View style={ss.card}>
+        <Text style={ss.label}>Longest{"\n"}Weekly Streak</Text>
+        <Text style={[ss.num, { color: "#818cf8" }]}>
+          {longestWeeklyStreak}
+        </Text>
+        <Text style={[ss.unit, { color: "#818cf8" }]}>Weeks</Text>
+      </View>
+    </View>
+  );
+}
+
+const ss = StyleSheet.create({
+  row: { flexDirection: "row", gap: 12, marginBottom: 12 },
+  card: {
+    flex: 1,
+    backgroundColor: "#1c1c1e",
+    borderRadius: 18,
+    padding: 18,
+    gap: 4,
+  },
+  label: { color: "#888", fontSize: 12, lineHeight: 16 },
+  num: { color: "#ef4444", fontSize: 40, fontWeight: "800", letterSpacing: -1 },
+  unit: { color: "#ef4444", fontSize: 13, fontWeight: "600" },
+});
+
+// ─── Stats Card (Entries This Year chart like Apple Journal) ──────────────────
+function StatsCard({
+  data,
+  totalEntries,
+  totalWords,
+  accent,
+}: {
+  data: { date: string; count: number }[];
+  totalEntries: number;
+  totalWords: number;
+  accent: string;
+}) {
+  return (
+    <View style={stc.card}>
+      <View style={stc.topRow}>
+        <View>
+          <Text style={stc.bigNum}>{totalEntries}</Text>
+          <Text style={stc.label}>Entries{"\n"}This Year</Text>
+        </View>
+        <View style={stc.rightStats}>
+          <Text style={stc.wordCount}>{totalWords.toLocaleString()}</Text>
+          <Text style={stc.wordLabel}>Words Written</Text>
+        </View>
+      </View>
+      <YearCalendarStrip data={data} accent={accent} />
+    </View>
+  );
+}
+
+const stc = StyleSheet.create({
+  card: {
+    backgroundColor: "#1a1f3c",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 12,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 4,
+  },
+  bigNum: {
+    color: "#fff",
+    fontSize: 52,
+    fontWeight: "800",
+    letterSpacing: -2,
+    lineHeight: 56,
+  },
+  label: { color: "#6b7db8", fontSize: 13, lineHeight: 18, marginTop: 4 },
+  rightStats: { alignItems: "flex-end", marginTop: 4 },
+  wordCount: { color: "#818cf8", fontSize: 28, fontWeight: "700" },
+  wordLabel: { color: "#4a5580", fontSize: 11, marginTop: 2 },
+});
+
+// ─── Section Header ───────────────────────────────────────────────────────────
+function SectionHeader({ title }: { title: string }) {
+  return <Text style={sh.title}>{title}</Text>;
+}
+
+const sh = StyleSheet.create({
+  title: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    marginBottom: 10,
+    marginTop: 8,
+  },
+});
+
+// ─── Mini stat chips ──────────────────────────────────────────────────────────
+function PatternChips({
+  bestDay,
+  peakHour,
+  avgWords,
+}: {
+  bestDay: string;
+  peakHour: number | null;
+  avgWords: number;
+}) {
+  const chips = [
+    { icon: "📅", value: bestDay, label: "Best Day" },
+    ...(peakHour !== null
+      ? [{ icon: "⏰", value: formatHour(peakHour), label: "Peak Hour" }]
+      : []),
+    { icon: "✍️", value: String(avgWords), label: "Avg Words" },
+  ];
+  return (
+    <View style={pc.row}>
+      {chips.map((c, i) => (
+        <View key={i} style={pc.chip}>
+          <Text style={pc.icon}>{c.icon}</Text>
+          <Text style={pc.value}>{c.value}</Text>
+          <Text style={pc.label}>{c.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const pc = StyleSheet.create({
+  row: { flexDirection: "row", gap: 10, marginBottom: 12 },
+  chip: {
+    flex: 1,
+    backgroundColor: "#1c1c1e",
+    borderRadius: 16,
+    padding: 14,
+    alignItems: "center",
+    gap: 4,
+  },
+  icon: { fontSize: 20 },
+  value: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  label: { color: "#555", fontSize: 10, fontWeight: "500" },
+});
+
+// ─── Mood bars ────────────────────────────────────────────────────────────────
+function MoodSection({
+  data,
+}: {
+  data: { label: string; color: string; count: number }[];
+}) {
+  const total = data.reduce((a, d) => a + d.count, 0);
+  return (
+    <View style={ms.card}>
+      <SectionHeader title="Mood" />
+      {data
+        .sort((a, b) => b.count - a.count)
+        .map((m, i) => {
+          const pct = total > 0 ? (m.count / total) * 100 : 0;
+          return (
+            <View key={i} style={ms.row}>
+              <Text style={ms.label}>{m.label}</Text>
+              <View style={ms.track}>
+                <View
+                  style={[
+                    ms.fill,
+                    { width: `${pct}%` as any, backgroundColor: m.color },
+                  ]}
+                />
+              </View>
+              <Text style={[ms.pct, { color: m.color }]}>
+                {Math.round(pct)}%
+              </Text>
+            </View>
+          );
+        })}
+    </View>
+  );
+}
+
+const ms = StyleSheet.create({
+  card: {
+    backgroundColor: "#1c1c1e",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  label: { color: "#888", fontSize: 12, width: 110 },
+  track: {
+    flex: 1,
+    height: 6,
+    backgroundColor: "#2a2a2a",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  fill: { height: "100%", borderRadius: 3 },
+  pct: { fontSize: 11, fontWeight: "700", width: 34, textAlign: "right" },
+});
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -356,7 +674,7 @@ export default function InsightsScreen() {
     setLoading(false);
   };
 
-  const accent = "#c084fc";
+  const accent = "#818cf8";
 
   if (loading) {
     return (
@@ -412,262 +730,137 @@ export default function InsightsScreen() {
     );
   }
 
-  const moodTotal = data.moodDistribution.reduce((acc, m) => acc + m.count, 0);
-
   return (
     <ScrollView
-      style={[s.container]}
+      style={s.container}
       contentContainerStyle={{
         paddingTop: insets.top + 16,
-        paddingBottom: insets.bottom + 32,
-        paddingHorizontal: 20,
+        paddingBottom: insets.bottom + 40,
+        paddingHorizontal: 16,
       }}
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View style={s.header}>
-        <Text style={s.headerLabel}>Insights</Text>
-      </View>
+      <Text style={s.pageTitle}>Insights</Text>
 
-      {/* Streak banner */}
-      <View style={[s.streakBanner, { borderColor: accent + "44" }]}>
-        <View style={s.streakLeft}>
-          <Text style={s.streakFire}>🔥</Text>
-          <View>
-            <Text style={[s.streakCount, { color: accent }]}>
-              {data.currentStreak}
-            </Text>
-            <Text style={s.streakLabel}>day streak</Text>
-          </View>
+      {/* Streaks section */}
+      <SectionHeader title="Streaks" />
+
+      {/* Main streak card — Apple Journal purple card */}
+      <StreakCard
+        currentStreak={data.currentStreak}
+        longestStreak={data.longestStreak}
+        longestWeeklyStreak={data.longestWeeklyStreak}
+        daysJournaled={data.daysJournaled}
+        entriesThisYear={data.entriesThisYear}
+      />
+
+      {/* Longest daily + weekly */}
+      <StreakStatsCard
+        longestStreak={data.longestStreak}
+        longestWeeklyStreak={data.longestWeeklyStreak}
+      />
+
+      {/* Stats section */}
+      <SectionHeader title="Stats" />
+
+      {/* Entries this year + word count + month chart */}
+      <StatsCard
+        data={data.calendarYear}
+        totalEntries={data.entriesThisYear}
+        totalWords={data.totalWords}
+        accent={accent}
+      />
+
+      {/* Journaled days + avg words row */}
+      <View style={s.twoCol}>
+        <View style={[s.miniCard, { backgroundColor: "#3d1f1f" }]}>
+          <Text style={[s.miniNum, { color: "#f87171" }]}>
+            {data.daysJournaled}
+          </Text>
+          <Text style={s.miniLabel}>Days{"\n"}Journaled</Text>
         </View>
-        <View style={s.streakDivider} />
-        <View style={s.streakRight}>
-          <Text style={s.streakBestValue}>{data.longestStreak}</Text>
-          <Text style={s.streakBestLabel}>longest streak</Text>
+        <View style={[s.miniCard, { backgroundColor: "#1f2d3d" }]}>
+          <Text style={[s.miniNum, { color: "#60a5fa" }]}>
+            {data.totalWords.toLocaleString()}
+          </Text>
+          <Text style={s.miniLabel}>Words{"\n"}Written</Text>
         </View>
-      </View>
-
-      {/* Top stats */}
-      <View style={s.statsRow}>
-        <StatCard icon="📝" value={String(data.totalEntries)} label="Entries" />
-        <StatCard
-          icon="🔤"
-          value={data.totalWords.toLocaleString()}
-          label="Words"
-        />
-        <StatCard
-          icon="📏"
-          value={String(data.avgWordsPerEntry)}
-          label="Avg words"
-        />
-      </View>
-
-      {/* Last 7 days */}
-      <View style={s.card}>
-        <SectionTitle title="Last 7 Days" subtitle="Entries per day" />
-        <BarChart data={data.last7Days} accent={accent} />
-      </View>
-
-      {/* Last 4 weeks */}
-      <View style={s.card}>
-        <SectionTitle title="Last 4 Weeks" subtitle="Entries per week" />
-        <BarChart data={data.last4Weeks} accent={accent} />
       </View>
 
       {/* Writing patterns */}
-      <View style={s.card}>
-        <SectionTitle title="Writing Patterns" />
-        <View style={s.patternRow}>
-          <View style={s.patternItem}>
-            <Text style={s.patternIcon}>📅</Text>
-            <Text style={s.patternValue}>{data.bestDayOfWeek}</Text>
-            <Text style={s.patternLabel}>Best day</Text>
-          </View>
-          {data.mostActiveHour !== null && (
-            <View style={s.patternItem}>
-              <Text style={s.patternIcon}>⏰</Text>
-              <Text style={s.patternValue}>
-                {formatHour(data.mostActiveHour)}
-              </Text>
-              <Text style={s.patternLabel}>Peak hour</Text>
-            </View>
-          )}
-          <View style={s.patternItem}>
-            <Text style={s.patternIcon}>✍️</Text>
-            <Text style={s.patternValue}>{data.avgWordsPerEntry}</Text>
-            <Text style={s.patternLabel}>Avg length</Text>
-          </View>
-        </View>
-      </View>
+      <SectionHeader title="Writing Patterns" />
+      <PatternChips
+        bestDay={data.bestDayOfWeek}
+        peakHour={data.mostActiveHour}
+        avgWords={data.avgWordsPerEntry}
+      />
 
-      {/* Top activities */}
+      {/* Activities */}
       {data.topActivities.length > 0 && (
-        <View style={s.card}>
-          <SectionTitle
-            title="Top Activities"
-            subtitle="What you do while journaling"
-          />
-          <View style={s.activityRow}>
+        <>
+          <SectionHeader title="Top Activities" />
+          <View style={s.activitiesRow}>
             {data.topActivities.map((act) => (
-              <View key={act.id} style={s.activityItem}>
-                <View
-                  style={[s.activityCircle, { borderColor: accent + "55" }]}
-                >
-                  <Text style={s.activityEmoji}>{act.emoji}</Text>
+              <View key={act.id} style={s.actCard}>
+                <View style={[s.actCircle, { borderColor: accent + "55" }]}>
+                  <Text style={{ fontSize: 22 }}>{act.emoji}</Text>
                 </View>
-                <Text style={s.activityLabel}>{act.label}</Text>
-                <Text style={[s.activityCount, { color: accent }]}>
+                <Text style={s.actLabel}>{act.label}</Text>
+                <Text style={[s.actCount, { color: accent }]}>
                   {act.count}x
                 </Text>
               </View>
             ))}
           </View>
-        </View>
+        </>
       )}
 
-      {/* Mood distribution */}
+      {/* Mood */}
       {data.moodDistribution.length > 0 && (
-        <View style={s.card}>
-          <SectionTitle
-            title="Mood Distribution"
-            subtitle="Based on your logged emotions"
-          />
-          {data.moodDistribution
-            .sort((a, b) => b.count - a.count)
-            .map((m) => (
-              <MoodBar key={m.valence} item={m} total={moodTotal} />
-            ))}
-        </View>
+        <>
+          <MoodSection data={data.moodDistribution} />
+        </>
       )}
     </ScrollView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  header: { marginBottom: 20 },
-  headerLabel: {
+  pageTitle: {
     color: "#fff",
-    fontSize: 28,
-    fontWeight: "700",
-    letterSpacing: -0.5,
+    fontSize: 34,
+    fontWeight: "800",
+    letterSpacing: -0.8,
+    marginBottom: 20,
   },
-
-  // Streak banner
-  streakBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#111",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 18,
-    marginBottom: 14,
-  },
-  streakLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
-  streakFire: { fontSize: 32 },
-  streakCount: { fontSize: 36, fontWeight: "800", lineHeight: 38 },
-  streakLabel: { color: "#555", fontSize: 12, fontWeight: "500" },
-  streakDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#222",
-    marginHorizontal: 16,
-  },
-  streakRight: { alignItems: "center" },
-  streakBestValue: { color: "#fff", fontSize: 22, fontWeight: "700" },
-  streakBestLabel: { color: "#444", fontSize: 11, fontWeight: "500" },
-
-  // Stats row
-  statsRow: { flexDirection: "row", gap: 10, marginBottom: 14 },
-  statCard: {
+  twoCol: { flexDirection: "row", gap: 12, marginBottom: 12 },
+  miniCard: {
     flex: 1,
-    backgroundColor: "#111",
-    borderRadius: 14,
-    padding: 14,
-    alignItems: "center",
-    gap: 3,
-    borderWidth: 1,
-    borderColor: "#1e1e1e",
+    borderRadius: 18,
+    padding: 18,
+    gap: 4,
   },
-  statIcon: { fontSize: 18 },
-  statValue: { color: "#fff", fontSize: 17, fontWeight: "700" },
-  statLabel: { color: "#555", fontSize: 10, fontWeight: "500" },
-
-  // Card
-  card: {
-    backgroundColor: "#111",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#1e1e1e",
-    padding: 16,
-    marginBottom: 14,
-  },
-  sectionTitle: { color: "#f0f0f0", fontSize: 15, fontWeight: "700" },
-  sectionSubtitle: { color: "#444", fontSize: 12, marginTop: 2 },
-
-  // Bar chart
-  barChart: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    height: 110,
-    paddingTop: 16,
-  },
-  barCol: { flex: 1, alignItems: "center", gap: 4 },
-  barCount: { color: "#555", fontSize: 9, fontWeight: "600" },
-  bar: { width: "60%", borderRadius: 4, minHeight: 2 },
-  barLabel: { color: "#444", fontSize: 10, fontWeight: "500" },
-
-  // Patterns
-  patternRow: { flexDirection: "row", justifyContent: "space-around" },
-  patternItem: { alignItems: "center", gap: 4 },
-  patternIcon: { fontSize: 22 },
-  patternValue: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  patternLabel: { color: "#444", fontSize: 11 },
-
-  // Activities
-  activityRow: {
+  miniNum: { fontSize: 36, fontWeight: "800", letterSpacing: -1 },
+  miniLabel: { color: "#888", fontSize: 12, lineHeight: 17 },
+  activitiesRow: {
     flexDirection: "row",
     justifyContent: "space-around",
     flexWrap: "wrap",
     gap: 8,
+    marginBottom: 12,
   },
-  activityItem: { alignItems: "center", gap: 4, minWidth: 64 },
-  activityCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  actCard: { alignItems: "center", gap: 6, minWidth: 70 },
+  actCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: "#1a1a1a",
     borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
   },
-  activityEmoji: { fontSize: 22 },
-  activityLabel: { color: "#888", fontSize: 10, fontWeight: "500" },
-  activityCount: { fontSize: 11, fontWeight: "700" },
-
-  // Mood bars
-  moodBarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  moodBarLabel: { color: "#888", fontSize: 12, width: 110 },
-  moodBarTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: "#1e1e1e",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  moodBarFill: { height: "100%", borderRadius: 3 },
-  moodBarPct: {
-    fontSize: 11,
-    fontWeight: "600",
-    width: 32,
-    textAlign: "right",
-  },
+  actLabel: { color: "#888", fontSize: 10, fontWeight: "500" },
+  actCount: { fontSize: 11, fontWeight: "700" },
 });
