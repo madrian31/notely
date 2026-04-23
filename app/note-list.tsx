@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage, STORAGE_KEYS } from "./(tabs)/storage";
+import { Storage, STORAGE_KEYS } from "./storage";
 
 type Note = {
   id: string;

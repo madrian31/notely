@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GreetingHeader } from "../../components/greeting-header";
-import { Storage, STORAGE_KEYS } from "./storage";
+import { Storage, STORAGE_KEYS } from "../storage";
 
 export type Journal = {
   id: string;

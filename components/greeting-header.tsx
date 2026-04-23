@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Storage, STORAGE_KEYS } from "../app/(tabs)/storage";
+import { Storage, STORAGE_KEYS } from "../app/storage";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ function NameModal({
               style={styles.modalInput}
               value={value}
               onChangeText={setValue}
-              placeholder="e.g. Marc"
+              placeholder="e.g. Adrian"
               placeholderTextColor="#555"
               autoFocus
               returnKeyType="done"

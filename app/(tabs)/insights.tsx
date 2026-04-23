@@ -2,7 +2,7 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage, STORAGE_KEYS } from "./storage";
+import { Storage, STORAGE_KEYS } from "../storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

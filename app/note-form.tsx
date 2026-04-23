@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Storage, STORAGE_KEYS } from "./(tabs)/storage";
+import { Storage, STORAGE_KEYS } from "./storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -335,14 +335,14 @@ export default function NoteForm() {
         updated = parsed.map((n) =>
           n.id === noteIdRef.current
             ? {
-                ...n,
-                title: cleanTitle,
-                text: plainText,
-                segments,
-                emotion: emotionRef.current,
-                activities: activitiesRef.current,
-                tags: tagsRef.current,
-              }
+              ...n,
+              title: cleanTitle,
+              text: plainText,
+              segments,
+              emotion: emotionRef.current,
+              activities: activitiesRef.current,
+              tags: tagsRef.current,
+            }
             : n,
         );
       } else {
