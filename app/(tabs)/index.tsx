@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GreetingHeader } from "../../components/greeting-header";
 import { Storage, STORAGE_KEYS } from "./storage";
 
 export type Journal = {
@@ -117,6 +118,16 @@ const JOURNAL_ICONS = [
   "😶",
 ];
 
+// Returns true if the hex color is perceived as light
+function isLightColor(hex: string): boolean {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  // Perceived luminance formula
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -198,12 +209,7 @@ export default function HomeScreen() {
     setModalVisible(false);
   };
 
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning ☀️";
-    if (h < 18) return "Good afternoon 🌤";
-    return "Good evening 🌙";
-  };
+
 
   const deleteJournal = async (journal: Journal) => {
     const updated = journals.filter((j) => j.id !== journal.id);
@@ -289,12 +295,9 @@ export default function HomeScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.header}>
         <Text style={styles.headerLabel}>Journal</Text>
-        <Pressable onPress={openAddModal} style={styles.addBtn}>
-          <Text style={styles.addBtnText}>＋</Text>
-        </Pressable>
       </View>
 
-      <Text style={styles.greeting}>{getGreeting()}</Text>
+      <GreetingHeader />
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
@@ -321,7 +324,7 @@ export default function HomeScreen() {
           <Text style={styles.emptyIcon}>📔</Text>
           <Text style={styles.emptyText}>No journals yet</Text>
           <Text style={styles.emptySub}>
-            Tap ＋ to create your first journal
+            Tap the + button below to get started
           </Text>
         </View>
       ) : (
@@ -329,10 +332,25 @@ export default function HomeScreen() {
           data={journals}
           keyExtractor={(j) => j.id}
           renderItem={renderJournal}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* ── Floating Action Button ── */}
+      <Pressable
+        onPress={openAddModal}
+        style={({ pressed }) => [
+          styles.fab,
+          { bottom: insets.bottom + 24 },
+          pressed && styles.fabPressed,
+        ]}
+      >
+        <View style={styles.fabPlus}>
+          <View style={styles.fabPlusH} />
+          <View style={styles.fabPlusV} />
+        </View>
+      </Pressable>
 
       {/* ── Press-hold Options Menu ── */}
       <Modal
@@ -434,7 +452,7 @@ export default function HomeScreen() {
                   { backgroundColor: selectedColor },
                 ]}
               >
-                <Text style={styles.fsSaveText}>✓</Text>
+                <Text style={[styles.fsSaveText, { color: isLightColor(selectedColor) ? "#111" : "#fff" }]}>✓</Text>
               </View>
             </Pressable>
           </View>
@@ -544,7 +562,7 @@ export default function HomeScreen() {
                   { backgroundColor: selectedColor },
                 ]}
               >
-                <Text style={styles.fsSaveText}>✓</Text>
+                <Text style={[styles.fsSaveText, { color: isLightColor(selectedColor) ? "#111" : "#fff" }]}>✓</Text>
               </View>
             </Pressable>
           </View>
@@ -643,15 +661,45 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  addBtn: { padding: 4 },
-  addBtnText: { color: "#c084fc", fontSize: 26, fontWeight: "300" },
-  greeting: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 24,
-    letterSpacing: -0.5,
+  // ── Floating Action Button ──
+  fab: {
+    position: "absolute",
+    right: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 30,
+    backgroundColor: "#c084fc",
+    alignItems: "center",
+    justifyContent: "center",
+
+    // Android shadow
+    elevation: 10,
   },
+  fabPressed: {
+    transform: [{ scale: 0.93 }],
+    shadowOpacity: 0.25,
+  },
+  fabPlus: {
+    width: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fabPlusH: {
+    position: "absolute",
+    width: 18,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "#fff",
+  },
+  fabPlusV: {
+    position: "absolute",
+    width: 2,
+    height: 18,
+    borderRadius: 1,
+    backgroundColor: "#fff",
+  },
+
   statsRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
   statCard: {
     flex: 1,

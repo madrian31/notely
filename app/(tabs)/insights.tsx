@@ -99,7 +99,7 @@ const ACCENT = "#818cf8";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 function toDateStr(d: Date) {
-  return d.toISOString().split("T")[0];
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function formatHour(h: number) {
   if (h === 0) return "12 AM";
@@ -187,7 +187,7 @@ function computeInsights(allNotes: Note[]): InsightData {
       ((d.getTime() - startOfYear.getTime()) / 86400000 +
         startOfYear.getDay() +
         1) /
-        7,
+      7,
     );
     weekSet.add(`${d.getFullYear()}-W${weekNum}`);
   });
@@ -269,7 +269,7 @@ function computeInsights(allNotes: Note[]): InsightData {
     const avg =
       wNotes.length > 0
         ? wNotes.reduce((s, n) => s + (n.emotion?.valence ?? 0), 0) /
-          wNotes.length
+        wNotes.length
         : null;
     return { week: `W${8 - i}`, avg };
   }).reverse();
@@ -628,7 +628,7 @@ function ActivityCalendar({
             backgroundColor: ACCENT,
           }}
         />
-        <Text style={{ color: "#444", fontSize: 10 }}>journaled</Text>
+        <Text style={{ color: "#444", fontSize: 10 }}>Journaled</Text>
       </View>
     </View>
   );
@@ -1414,12 +1414,12 @@ export default function InsightsScreen() {
           { icon: "📅", value: data.bestDayOfWeek, label: "Best Day" },
           ...(data.mostActiveHour !== null
             ? [
-                {
-                  icon: "⏰",
-                  value: formatHour(data.mostActiveHour),
-                  label: "Peak Hour",
-                },
-              ]
+              {
+                icon: "⏰",
+                value: formatHour(data.mostActiveHour),
+                label: "Peak Hour",
+              },
+            ]
             : []),
           {
             icon: "✍️",

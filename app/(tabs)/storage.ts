@@ -7,6 +7,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const STORAGE_KEYS = {
   journals: "journals",
   notes: (journalId: string) => `notes_${journalId}`,
+  username: "username",
+  seenNamePrompt: "seen_name_prompt", // set to "1" once user has seen the onboarding popup
 };
 
 // ─── Size Guard ────────────────────────────────────────────────────────────────
