@@ -22,6 +22,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="note-list" />
         <Stack.Screen name="note-form" />
+        <Stack.Screen name="bible-reader" />
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}

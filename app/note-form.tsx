@@ -195,11 +195,13 @@ export default function NoteForm() {
   const noteId = asString(params.id);
   const journalId = asString(params.journalId);
   const journalColor = asString(params.journalColor, "#c084fc");
+  const initialTitle = asString(params.initialTitle, "");
+  const initialText = asString(params.initialText, "");
 
   // Each journal has its own storage key
   const storageKey = STORAGE_KEYS.notes(journalId);
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle);
   const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [fmt, setFmt] = useState<Partial<Segment>>({
@@ -229,7 +231,7 @@ export default function NoteForm() {
   const noteIdRef = useRef<string | null>(noteId || null);
   const hasChanges = useRef(false);
   const isSaving = useRef(false);
-  const latestRef = useRef({ title: "", segments: [defaultSegment()] });
+  const latestRef = useRef({ title: initialTitle, segments: [defaultSegment()] });
   const emotionRef = useRef<EmotionEntry | undefined>(undefined);
   const activitiesRef = useRef<string[]>([]);
   const tagsRef = useRef<string[]>([]);
@@ -556,6 +558,14 @@ export default function NoteForm() {
         }}
         selectionColor={journalColor}
       />
+
+      {/* Bible Verse Card — read-only, visible lang kapag galing sa Bible tap */}
+      {initialText ? (
+        <View style={s.verseCard}>
+          <Text style={s.verseCardRef}>📖 {initialTitle}</Text>
+          <Text style={s.verseCardText}>{initialText.replace(/^"|"$/g, "").trim()}</Text>
+        </View>
+      ) : null}
 
       {/* Editor */}
       <ScrollView
@@ -1171,6 +1181,29 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#1e1e1e",
+  },
+  verseCard: {
+    marginHorizontal: 18,
+    marginTop: 14,
+    marginBottom: 4,
+    backgroundColor: "#0e0e1a",
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#1e1e35",
+  },
+  verseCardRef: {
+    color: "#7c5fc4",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  verseCardText: {
+    color: "#b8aaee",
+    fontSize: 14,
+    fontStyle: "italic",
+    lineHeight: 22,
   },
   editorContent: { paddingHorizontal: 18, paddingTop: 14 },
   segInput: {

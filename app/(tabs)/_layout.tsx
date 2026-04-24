@@ -37,13 +37,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="today"
+        options={{
+          title: "Today",
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🌤️" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="insights"
         options={{
           title: "Insights",
           tabBarIcon: ({ focused }) => <TabIcon emoji="📊" focused={focused} />,
         }}
       />
+      {/* Hidden screens — hindi lalabas sa tab bar */}
       <Tabs.Screen name="explore" options={{ href: null }} />
+      <Tabs.Screen name="storage" options={{ href: null }} />
     </Tabs>
   );
 }
