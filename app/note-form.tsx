@@ -234,6 +234,8 @@ export default function NoteForm() {
   // Emotion picker sub-state
   const [selectedValence, setSelectedValence] = useState<number | null>(null);
 
+  const [segHeights, setSegHeights] = useState<Record<string, number>>({});
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteIdRef = useRef<string | null>(noteId || null);
   const hasChanges = useRef(false);
@@ -307,14 +309,8 @@ export default function NoteForm() {
       }
       if (existing.activities) setActivities(existing.activities);
       if (existing.tags) setTags(existing.tags);
-      if (existing.verseRef) {
-        setVerseRef(existing.verseRef);
-        verseRefRef.current = existing.verseRef;
-      }
-      if (existing.verseText) {
-        setVerseText(existing.verseText);
-        verseTextRef.current = existing.verseText;
-      }
+      if (existing.verseRef) { setVerseRef(existing.verseRef); verseRefRef.current = existing.verseRef; }
+      if (existing.verseText) { setVerseText(existing.verseText); verseTextRef.current = existing.verseText; }
     } catch (err) {
       console.log("loadNote error:", err);
     }
@@ -603,11 +599,12 @@ export default function NoteForm() {
             ? HEADING_WEIGHT[seg.heading]
             : "400";
           return (
+
             <TextInput
               key={seg.id}
-              ref={(r) => {
-                inputRefs.current[seg.id] = r;
-              }}
+              ref={(r) => { inputRefs.current[seg.id] = r; }}
+              placeholder={idx === 0 ? "Write your reflection here..." : ""}
+              placeholderTextColor={journalColor + "55"}
               style={[
                 s.segInput,
                 {
@@ -625,6 +622,9 @@ export default function NoteForm() {
                           : "none",
                   textAlign: seg.align ?? "left",
                   backgroundColor: seg.highlight || "transparent",
+                  // ✅ Dynamic height — grows with content
+                  height: Math.max(32, segHeights[seg.id] ?? 32),
+                  minHeight: 32,
                 },
               ]}
               value={seg.text}
@@ -632,11 +632,18 @@ export default function NoteForm() {
               onKeyPress={(e) => handleKeyPress(idx, e)}
               onFocus={() => setActiveIdx(idx)}
               onSubmitEditing={() => handleEnter(idx)}
-              multiline={false}
+              // ✅ Ito ang key — i-track ang actual rendered height
+              onContentSizeChange={(e) => {
+                const h = e.nativeEvent.contentSize.height;
+                setSegHeights(prev => ({ ...prev, [seg.id]: h }));
+              }}
+              multiline
+              // ✅ Huwag nang scrollEnabled — ang ScrollView parent ang bahala
+              scrollEnabled={false}
               selectionColor={journalColor}
               blurOnSubmit={false}
-              autoFocus={idx === 0 && !noteId}
             />
+
           );
         })}
       </ScrollView>
@@ -1233,7 +1240,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 0,
     backgroundColor: "transparent",
     marginVertical: 1,
-    ...(Platform.OS === "android" && { underlineColorAndroid: "transparent" }),
+    ...(Platform.OS === "android" && {
+      underlineColorAndroid: "transparent",
+      textAlignVertical: "top",
+    }),
   },
   toolbarWrap: {
     position: "absolute",
