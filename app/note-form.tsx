@@ -47,6 +47,8 @@ type Note = {
   emotion?: EmotionEntry;
   activities?: string[];
   tags?: string[];
+  verseRef?: string;
+  verseText?: string;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -196,12 +198,17 @@ export default function NoteForm() {
   const journalId = asString(params.journalId);
   const journalColor = asString(params.journalColor, "#c084fc");
   const initialTitle = asString(params.initialTitle, "");
-  const initialText = asString(params.initialText, "");
+  const paramVerseRef = asString(params.verseRef, "");
+  const paramVerseText = asString(params.verseText, "");
 
   // Each journal has its own storage key
   const storageKey = STORAGE_KEYS.notes(journalId);
 
   const [title, setTitle] = useState(initialTitle);
+  const [verseRef, setVerseRef] = useState(paramVerseRef);
+  const [verseText, setVerseText] = useState(paramVerseText);
+  const verseRefRef = useRef(paramVerseRef);
+  const verseTextRef = useRef(paramVerseText);
   const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [fmt, setFmt] = useState<Partial<Segment>>({
@@ -300,6 +307,14 @@ export default function NoteForm() {
       }
       if (existing.activities) setActivities(existing.activities);
       if (existing.tags) setTags(existing.tags);
+      if (existing.verseRef) {
+        setVerseRef(existing.verseRef);
+        verseRefRef.current = existing.verseRef;
+      }
+      if (existing.verseText) {
+        setVerseText(existing.verseText);
+        verseTextRef.current = existing.verseText;
+      }
     } catch (err) {
       console.log("loadNote error:", err);
     }
@@ -344,6 +359,8 @@ export default function NoteForm() {
               emotion: emotionRef.current,
               activities: activitiesRef.current,
               tags: tagsRef.current,
+              verseRef: verseRefRef.current || n.verseRef,
+              verseText: verseTextRef.current || n.verseText,
             }
             : n,
         );
@@ -360,6 +377,8 @@ export default function NoteForm() {
             emotion: emotionRef.current,
             activities: activitiesRef.current,
             tags: tagsRef.current,
+            verseRef: verseRefRef.current || undefined,
+            verseText: verseTextRef.current || undefined,
           },
           ...parsed,
         ];
@@ -560,10 +579,10 @@ export default function NoteForm() {
       />
 
       {/* Bible Verse Card — read-only, visible lang kapag galing sa Bible tap */}
-      {initialText ? (
+      {verseText ? (
         <View style={s.verseCard}>
-          <Text style={s.verseCardRef}>📖 {initialTitle}</Text>
-          <Text style={s.verseCardText}>{initialText.replace(/^"|"$/g, "").trim()}</Text>
+          <Text style={s.verseCardRef}>📖 {verseRef}</Text>
+          <Text style={s.verseCardText}>{verseText.replace(/^"|"$/g, "").trim()}</Text>
         </View>
       ) : null}
 
@@ -616,6 +635,7 @@ export default function NoteForm() {
               multiline={false}
               selectionColor={journalColor}
               blurOnSubmit={false}
+              autoFocus={idx === 0 && !noteId}
             />
           );
         })}

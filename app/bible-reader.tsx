@@ -152,6 +152,10 @@ export default function BibleReaderScreen() {
   const [showJournalPicker, setShowJournalPicker] = useState(false);
   const [journals, setJournals] = useState<Journal[]>([]);
 
+  // Multi-select mode
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedVerses, setSelectedVerses] = useState<Verse[]>([]);
+
   const currentBookMeta =
     BIBLE_BOOKS.find((b) => b.name === selectedBook) ?? BIBLE_BOOKS[43]; // John fallback
 
@@ -171,18 +175,61 @@ export default function BibleReaderScreen() {
   };
 
   const handleVerseTap = (verse: Verse) => {
-    setTappedVerse(verse);
+    if (selectionMode) {
+      // Toggle selection
+      const isSelected = selectedVerses.some((v) => v.verse === verse.verse);
+      if (isSelected) {
+        const next = selectedVerses.filter((v) => v.verse !== verse.verse);
+        setSelectedVerses(next);
+        if (next.length === 0) setSelectionMode(false);
+      } else {
+        setSelectedVerses((prev) => [...prev, verse].sort((a, b) => a.verse - b.verse));
+      }
+    } else {
+      // Single tap — open journal picker immediately
+      setSelectedVerses([verse]);
+      setTappedVerse(verse);
+      setShowJournalPicker(true);
+    }
+  };
+
+  const handleVerseLongPress = (verse: Verse) => {
+    setSelectionMode(true);
+    setSelectedVerses([verse]);
+  };
+
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedVerses([]);
+  };
+
+  const openJournalPickerForSelection = () => {
+    if (selectedVerses.length === 0) return;
     setShowJournalPicker(true);
   };
 
   const goToJournal = (journal: Journal) => {
-    if (!tappedVerse) return;
+    if (selectedVerses.length === 0) return;
     setShowJournalPicker(false);
-    const reference = `${selectedBook} ${currentChapter}:${tappedVerse.verse}`;
-    const verseText = tappedVerse.text.trim();
+    setSelectionMode(false);
+
+    let verseRef: string;
+    let verseText: string;
+
+    if (selectedVerses.length === 1) {
+      verseRef = `${selectedBook} ${currentChapter}:${selectedVerses[0].verse}`;
+      verseText = selectedVerses[0].text.trim();
+    } else {
+      const first = selectedVerses[0].verse;
+      const last = selectedVerses[selectedVerses.length - 1].verse;
+      verseRef = `${selectedBook} ${currentChapter}:${first}-${last}`;
+      verseText = selectedVerses.map((v) => `[${v.verse}] ${v.text.trim()}`).join("\n");
+    }
+
     router.push(
-      `../note-form?journalId=${journal.id}&journalColor=${encodeURIComponent(journal.color)}&initialTitle=${encodeURIComponent(reference)}&initialText=${encodeURIComponent(`"${verseText}"\n\n`)}` as any,
+      `../note-form?journalId=${journal.id}&journalColor=${encodeURIComponent(journal.color)}&initialTitle=${encodeURIComponent(verseRef)}&verseRef=${encodeURIComponent(verseRef)}&verseText=${encodeURIComponent(verseText)}` as any,
     );
+    setSelectedVerses([]);
   };
 
   const loadChapter = async () => {
@@ -262,24 +309,55 @@ export default function BibleReaderScreen() {
               {selectedBook} {currentChapter}
             </Text>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handleVerseTap(item)}
-              style={({ pressed }) => [
-                styles.verseRow,
-                pressed && styles.verseRowPressed,
-              ]}
-            >
-              <Text style={styles.verseNumber}>{item.verse}</Text>
-              <Text style={styles.verseText}>{item.text.trim()}</Text>
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const isSelected = selectedVerses.some((v) => v.verse === item.verse);
+            return (
+              <Pressable
+                onPress={() => handleVerseTap(item)}
+                onLongPress={() => handleVerseLongPress(item)}
+                delayLongPress={300}
+                style={({ pressed }) => [
+                  styles.verseRow,
+                  pressed && styles.verseRowPressed,
+                  isSelected && styles.verseRowSelected,
+                ]}
+              >
+                {isSelected && (
+                  <Text style={styles.verseCheckmark}>✓</Text>
+                )}
+                <Text style={[styles.verseNumber, isSelected && { color: "#e040fb" }]}>
+                  {item.verse}
+                </Text>
+                <Text style={[styles.verseText, isSelected && { color: "#fff" }]}>
+                  {item.text.trim()}
+                </Text>
+              </Pressable>
+            );
+          }}
         />
       ) : (
         <View style={styles.loadingContainer}>
           <Text style={styles.errorText}>
             Could not load chapter.{"\n"}Check your internet connection.
           </Text>
+        </View>
+      )}
+
+      {/* ── Selection Mode Bar ── */}
+      {selectionMode && (
+        <View style={[styles.selectionBar, { bottom: insets.bottom + 72 }]}>
+          <Pressable onPress={cancelSelection} style={styles.selectionCancel}>
+            <Text style={styles.selectionCancelText}>✕ Cancel</Text>
+          </Pressable>
+          <Text style={styles.selectionCount}>
+            {selectedVerses.length} verse{selectedVerses.length !== 1 ? "s" : ""} selected
+          </Text>
+          <Pressable
+            onPress={openJournalPickerForSelection}
+            style={[styles.selectionJournalBtn, { opacity: selectedVerses.length > 0 ? 1 : 0.4 }]}
+          >
+            <Text style={styles.selectionJournalBtnText}>✍️ Journal</Text>
+          </Pressable>
         </View>
       )}
 
@@ -431,13 +509,17 @@ export default function BibleReaderScreen() {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View style={styles.journalPickerBox}>
               {/* Verse preview */}
-              {tappedVerse && (
+              {selectedVerses.length > 0 && (
                 <View style={styles.versePreview}>
                   <Text style={styles.versePreviewRef}>
-                    {selectedBook} {currentChapter}:{tappedVerse.verse}
+                    {selectedVerses.length === 1
+                      ? `${selectedBook} ${currentChapter}:${selectedVerses[0].verse}`
+                      : `${selectedBook} ${currentChapter}:${selectedVerses[0].verse}-${selectedVerses[selectedVerses.length - 1].verse}`}
                   </Text>
-                  <Text style={styles.versePreviewText} numberOfLines={3}>
-                    "{tappedVerse.text.trim()}"
+                  <Text style={styles.versePreviewText} numberOfLines={4}>
+                    {selectedVerses.length === 1
+                      ? `"${selectedVerses[0].text.trim()}"`
+                      : selectedVerses.map((v) => `[${v.verse}] ${v.text.trim()}`).join("\n")}
                   </Text>
                 </View>
               )}
@@ -699,4 +781,42 @@ const styles = StyleSheet.create({
   journalPickerArrow: { fontSize: 22, fontWeight: "300" },
   noJournals: { padding: 20, alignItems: "center" },
   noJournalsText: { color: "#444", fontSize: 13 },
+
+  // Selection mode
+  verseRowSelected: {
+    backgroundColor: "#1a0a2e",
+    borderRadius: 8,
+  },
+  verseCheckmark: {
+    color: "#c084fc",
+    fontSize: 13,
+    fontWeight: "700",
+    marginRight: 2,
+    marginTop: 3,
+  },
+  selectionBar: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    backgroundColor: "#1a0a2e",
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#3d1f6e",
+    zIndex: 50,
+  },
+  selectionCancel: { paddingVertical: 4, paddingRight: 8 },
+  selectionCancelText: { color: "#888", fontSize: 13 },
+  selectionCount: { color: "#c084fc", fontSize: 13, fontWeight: "600", flex: 1, textAlign: "center" },
+  selectionJournalBtn: {
+    backgroundColor: "#c084fc",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  selectionJournalBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
 });
