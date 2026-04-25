@@ -948,8 +948,8 @@ function ShareDevotionModal({
               <View style={sm.tipBox}>
                 <Text style={sm.tipText}>
                   {Platform.OS === "web"
-                    ? "💡 Sa browser, mag-do-download ang image. I-share mo na sa Messenger group!"
-                    : "💡 I-share ang image sa Messenger, Facebook, o kahit saan!"}
+                    ? "💡 In the browser, the image will be downloaded. You can now share it in your Messenger group!"
+                    : "💡 Share the image on Messenger, Facebook, or anywhere you like!"}
                 </Text>
               </View>
             )}
