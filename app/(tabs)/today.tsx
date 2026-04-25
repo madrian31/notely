@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   carouselGlow: { position: "absolute", top: 0, left: 0, right: 0, height: 80, borderRadius: 20 },
-  carouselEmojiBg: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 14 },
+  carouselEmojiBg: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 14, zIndex: 1, marginTop: 16 },
   carouselEmoji: { fontSize: 32 },
   carouselTitle: { color: "#fff", fontSize: 18, fontWeight: "700", lineHeight: 24, marginBottom: 8 },
   carouselDesc: { color: "#666", fontSize: 13, lineHeight: 20, marginBottom: 12 },
