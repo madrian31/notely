@@ -332,7 +332,7 @@ export default function PrayerListScreen() {
                 presentationStyle="pageSheet"
                 onRequestClose={() => setFormVisible(false)}
             >
-                <View style={styles.modalContainer}>
+                <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
                     {/* Modal Header */}
                     <View style={styles.modalHeader}>
                         <Pressable onPress={() => setFormVisible(false)} style={styles.modalHeaderBtn}>
@@ -438,7 +438,7 @@ export default function PrayerListScreen() {
                 {selectedPrayer && (() => {
                     const statusCfg = STATUS_CONFIG[selectedPrayer.status];
                     return (
-                        <View style={styles.modalContainer}>
+                        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
                             <View style={styles.modalHeader}>
                                 <Pressable onPress={() => setDetailVisible(false)} style={styles.modalHeaderBtn}>
                                     <Text style={styles.modalCancel}>Close</Text>
