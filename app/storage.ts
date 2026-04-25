@@ -21,7 +21,7 @@ async function getTotalStorageSize(): Promise<number> {
   try {
     const keys = await AsyncStorage.getAllKeys();
     const stores = await AsyncStorage.multiGet(keys as string[]);
-    return stores.reduce((total, [, value]) => {
+    return stores.reduce((total: number, [, value]: [string, string | null]) => {
       return total + (value ? new Blob([value]).size : 0);
     }, 0);
   } catch {
