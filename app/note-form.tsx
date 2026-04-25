@@ -341,6 +341,8 @@ type DevotionCardData = {
   date: string;
 };
 
+// FIX: Returns a data URL string (base64) instead of a blob URL.
+// canvas.toBlob() is unreliable on Android; toDataURL() works everywhere.
 async function drawDevotionCard(
   theme: (typeof CARD_THEMES)[0],
   data: DevotionCardData,
@@ -372,7 +374,6 @@ async function drawDevotionCard(
     return totalH;
   }
 
-  // CHROME: accent bar(8) + top padding to date(56) + date height+gap(44)
   const CHROME = 8 + 56 + 44;
 
   const TITLE_H = data.title
@@ -406,19 +407,15 @@ async function drawDevotionCard(
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // Background
   ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Top accent bar
   ctx.fillStyle = theme.accent;
   ctx.fillRect(0, 0, W, 8);
 
   const cx = W / 2;
-  // Start date well below the accent bar
   let curY = 64;
 
-  // Date
   const dateStr = new Date(data.date || Date.now()).toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
@@ -429,7 +426,6 @@ async function drawDevotionCard(
   ctx.fillText(dateStr.toUpperCase(), cx, curY);
   curY += 44;
 
-  // Title — full text, no maxLines
   if (data.title) {
     ctx.fillStyle = theme.titleColor;
     ctx.font = "bold 44px Georgia, serif";
@@ -438,7 +434,6 @@ async function drawDevotionCard(
     curY += 20;
   }
 
-  // Verse block — full verse, no maxLines
   if (data.verseText) {
     const verseClean = data.verseText.replace(/^"|"$/g, "").trim();
     const VPAD = 28;
@@ -470,7 +465,6 @@ async function drawDevotionCard(
     curY += verseBlockH + 24;
   }
 
-  // Body text — full reflection, paragraph-aware, no maxLines
   if (data.plainText) {
     ctx.fillStyle = theme.textColor;
     ctx.font = "22px Georgia, serif";
@@ -483,7 +477,6 @@ async function drawDevotionCard(
     curY += 8;
   }
 
-  // Footer
   ctx.strokeStyle = theme.borderColor;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(PAD, curY + 8); ctx.lineTo(W - PAD, curY + 8); ctx.stroke();
@@ -499,16 +492,8 @@ async function drawDevotionCard(
   ctx.textAlign = "right";
   ctx.fillText("Daily Devotion", W - PAD, curY);
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) { reject(new Error("Canvas capture failed")); return; }
-        resolve(URL.createObjectURL(blob));
-      },
-      "image/jpeg",
-      0.96,
-    );
-  });
+  // FIX: Use toDataURL instead of toBlob — works reliably on Android & web
+  return canvas.toDataURL("image/jpeg", 0.96);
 }
 
 // ─── Draw General Note Card ───────────────────────────────────────────────────
@@ -523,6 +508,7 @@ type NoteCardData = {
   accentColor: string;
 };
 
+// FIX: Returns a data URL string (base64) instead of a blob URL.
 async function drawGeneralNoteCard(
   theme: typeof NOTE_THEMES[0],
   data: NoteCardData,
@@ -536,7 +522,6 @@ async function drawGeneralNoteCard(
   measureCanvas.height = 100;
   const mctx = measureCanvas.getContext("2d")!;
 
-  // Title lines
   mctx.font = "bold 40px Georgia, serif";
   const titleWords = (data.title || "Untitled").split(" ");
   let tLine = ""; let titleLines = 0;
@@ -547,7 +532,6 @@ async function drawGeneralNoteCard(
   }
   titleLines++;
 
-  // Body lines
   mctx.font = "22px Georgia, serif";
   const bodyWords = (data.plainText || "").split(" ").filter(Boolean);
   let bLine = ""; let bodyLines = 0;
@@ -672,52 +656,47 @@ async function drawGeneralNoteCard(
   ctx.textAlign = "right";
   ctx.fillText(data.journalName || "My Journal", W - PAD, curY);
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) { reject(new Error("Canvas capture failed")); return; }
-        resolve(URL.createObjectURL(blob));
-      },
-      "image/jpeg",
-      0.96,
-    );
-  });
+  // FIX: Use toDataURL instead of toBlob — works reliably on Android & web
+  return canvas.toDataURL("image/jpeg", 0.96);
 }
 
 // ─── Share helper ─────────────────────────────────────────────────────────────
 
-async function shareOrDownloadBlobUrl(blobUrl: string, filename: string) {
+// FIX: Accepts a data URL (base64) instead of a blob URL.
+// This approach works on both Android and web without relying on toBlob().
+async function shareOrDownloadDataUrl(dataUrl: string, filename: string) {
   if (Platform.OS === "web") {
+    // On web: trigger a download via anchor click
     const a = document.createElement("a");
-    a.href = blobUrl;
+    a.href = dataUrl;
     a.download = filename;
     a.click();
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
   } else {
-    const resp = await fetch(blobUrl);
-    const blob = await resp.blob();
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
-      try {
-        const FileSystem = require("expo-file-system");
-        const fileUri = FileSystem.cacheDirectory + filename;
-        await FileSystem.writeAsStringAsync(fileUri, base64.split(",")[1], {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: "image/jpeg",
-            dialogTitle: "Share Note Card",
-          });
-        }
-      } catch {
-        await Sharing.shareAsync(base64);
-      }
-      URL.revokeObjectURL(blobUrl);
-    };
-    reader.readAsDataURL(blob);
+    // On Android/iOS: write base64 to cache then share via expo-sharing
+    try {
+      const FileSystem = require("expo-file-system");
+
+      // Strip the data URL prefix (e.g. "data:image/jpeg;base64,") to get raw base64
+      const base64 = dataUrl.split(",")[1];
+      if (!base64) throw new Error("Invalid data URL — missing base64 payload");
+
+      const fileUri = FileSystem.cacheDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) throw new Error("Sharing is not available on this device");
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: "image/jpeg",
+        dialogTitle: "Share Note Card",
+      });
+    } catch (err) {
+      console.log("shareOrDownloadDataUrl error:", err);
+      throw err; // re-throw so the caller can show an error message
+    }
   }
 }
 
@@ -884,9 +863,10 @@ function ShareDevotionModal({
     setIsCapturing(true);
     setStatus("Drawing card...");
     try {
-      const blobUrl = await drawDevotionCard(theme, { title, verseRef, verseText, plainText, date });
+      // FIX: drawDevotionCard now returns a data URL, not a blob URL
+      const dataUrl = await drawDevotionCard(theme, { title, verseRef, verseText, plainText, date });
       setStatus("Opening share options...");
-      await shareOrDownloadBlobUrl(blobUrl, `devotion-${Date.now()}.jpg`);
+      await shareOrDownloadDataUrl(dataUrl, `devotion-${Date.now()}.jpg`);
       setStatus(Platform.OS === "web" ? "Downloaded! 🎉 Save and share on Messenger." : "");
       if (Platform.OS === "web") setTimeout(() => setStatus(""), 4000);
     } catch (err) {
@@ -996,11 +976,12 @@ function ShareNoteModal({
     setStatus("Drawing card...");
     try {
       const plainText = segmentsToPlain(segments).trim();
-      const blobUrl = await drawGeneralNoteCard(theme, {
+      // FIX: drawGeneralNoteCard now returns a data URL, not a blob URL
+      const dataUrl = await drawGeneralNoteCard(theme, {
         title, plainText, date, emotion, tags, journalName, accentColor: journalColor,
       });
       setStatus("Opening share options...");
-      await shareOrDownloadBlobUrl(blobUrl, `note-${Date.now()}.jpg`);
+      await shareOrDownloadDataUrl(dataUrl, `note-${Date.now()}.jpg`);
       setStatus(Platform.OS === "web" ? "Downloaded! 🎉" : "");
       if (Platform.OS === "web") setTimeout(() => setStatus(""), 4000);
     } catch (err) {
