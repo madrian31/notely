@@ -53,6 +53,7 @@ export default function TabLayout() {
       {/* Hidden screens — hindi lalabas sa tab bar */}
       <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen name="storage" options={{ href: null }} />
+      <Tabs.Screen name="prayer-list" options={{ href: null }} />
     </Tabs>
   );
 }
