@@ -390,7 +390,7 @@ export default function TodayScreen() {
                 onPress={() => { setSelectedPrayer(prayer); setDetailVisible(true); }}
               >
                 <View style={[styles.prayerListAccent, { backgroundColor: cfg.color }]} />
-                <View style={[styles.prayerListEmojiBg, { backgroundColor: cfg.color + "18" }]}>
+                <View style={styles.prayerListEmojiBg}>
                   <Text style={{ fontSize: 18 }}>{prayer.emoji}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -455,23 +455,16 @@ export default function TodayScreen() {
                   style={({ pressed }) => [styles.carouselCard, { width: CARD_WIDTH }, pressed && { opacity: 0.85 }]}
                   onPress={() => { setSelectedPrayer(prayer); setDetailVisible(true); }}
                 >
-                  {/* Glow accent */}
-                  <View style={[styles.carouselGlow, { backgroundColor: cfg.color + "18" }]} />
-
-                  {/* Emoji */}
-                  <View style={[styles.carouselEmojiBg, { backgroundColor: cfg.color + "22" }]}>
+                  {/* Emoji top-left */}
+                  <View style={styles.carouselEmojiBg}>
                     <Text style={styles.carouselEmoji}>{prayer.emoji}</Text>
                   </View>
 
-                  {/* Title */}
+                  {/* Content below */}
                   <Text style={styles.carouselTitle} numberOfLines={2}>{prayer.title}</Text>
-
-                  {/* Description */}
                   {prayer.description ? (
-                    <Text style={styles.carouselDesc} numberOfLines={3}>{prayer.description}</Text>
+                    <Text style={styles.carouselDesc} numberOfLines={2}>{prayer.description}</Text>
                   ) : null}
-
-                  {/* Tags row */}
                   {prayer.tags.length > 0 && (
                     <View style={styles.carouselTags}>
                       {prayer.tags.slice(0, 3).map((t: string) => (
@@ -481,8 +474,6 @@ export default function TodayScreen() {
                       ))}
                     </View>
                   )}
-
-                  {/* Footer */}
                   <View style={styles.carouselFooter}>
                     <View style={[styles.carouselStatusDot, { backgroundColor: cfg.color }]} />
                     <Text style={[styles.carouselStatus, { color: cfg.color }]}>{cfg.label}</Text>
@@ -584,11 +575,11 @@ export default function TodayScreen() {
       <Modal
         visible={formVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setFormVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
             <Pressable onPress={() => setFormVisible(false)} style={styles.modalHeaderBtn}>
               <Text style={styles.modalCancel}>Cancel</Text>
             </Pressable>
@@ -677,14 +668,14 @@ export default function TodayScreen() {
       <Modal
         visible={detailVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setDetailVisible(false)}
       >
         {selectedPrayer && (() => {
           const cfg = STATUS_CONFIG[selectedPrayer.status];
           return (
             <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
+              <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
                 <Pressable onPress={() => setDetailVisible(false)} style={styles.modalHeaderBtn}>
                   <Text style={styles.modalCancel}>Close</Text>
                 </Pressable>
@@ -818,7 +809,7 @@ const styles = StyleSheet.create({
   prayerList: { gap: 8, marginBottom: 4 },
   prayerListCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 14, overflow: "hidden", borderWidth: 1, borderColor: "#1e1e1e", paddingVertical: 10, paddingRight: 12 },
   prayerListAccent: { width: 4, alignSelf: "stretch" },
-  prayerListEmojiBg: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", marginHorizontal: 10 },
+  prayerListEmojiBg: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", marginHorizontal: 10, backgroundColor: "#1a1a1a", borderWidth: 1, borderColor: "#2a2a2a" },
   prayerListTitle: { color: "#f0f0f0", fontSize: 14, fontWeight: "600" },
   prayerListDesc: { color: "#555", fontSize: 12, marginTop: 2 },
   prayerListRight: { alignItems: "center", gap: 4 },
@@ -827,15 +818,14 @@ const styles = StyleSheet.create({
   // Carousel view
   carouselCard: {
     backgroundColor: "#111",
-    borderRadius: 20,
-    padding: 22,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#1e1e1e",
-    minHeight: 220,
     overflow: "hidden",
   },
   carouselGlow: { position: "absolute", top: 0, left: 0, right: 0, height: 80, borderRadius: 20 },
-  carouselEmojiBg: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 14, zIndex: 1, marginTop: 16 },
+  carouselEmojiBg: { width: 50, height: 50, borderRadius: 14, alignItems: "center", justifyContent: "center", marginBottom: 16, backgroundColor: "#1a1a1a", borderWidth: 1, borderColor: "#2a2a2a" },
   carouselEmoji: { fontSize: 32 },
   carouselTitle: { color: "#fff", fontSize: 18, fontWeight: "700", lineHeight: 24, marginBottom: 8 },
   carouselDesc: { color: "#666", fontSize: 13, lineHeight: 20, marginBottom: 12 },
@@ -880,8 +870,8 @@ const styles = StyleSheet.create({
   noJournalsText: { color: "#444", fontSize: 13 },
 
   // Modal shared
-  modalContainer: { flex: 1, backgroundColor: "#0d0d0d" },
-  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: "#1e1e1e" },
+  modalContainer: { flex: 1, backgroundColor: "#161616" },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 8, backgroundColor: "#161616", borderBottomWidth: 1, borderBottomColor: "#1e1e1e" },
   modalHeaderBtn: { width: 70 },
   modalTitle: { color: "#fff", fontSize: 16, fontWeight: "700", textAlign: "center" },
   modalCancel: { color: "#555", fontSize: 15 },

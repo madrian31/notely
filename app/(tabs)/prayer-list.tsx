@@ -9,7 +9,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    View,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Storage } from "../storage";
@@ -288,7 +288,7 @@ export default function PrayerListScreen() {
                             <View style={[styles.prayerAccent, { backgroundColor: statusCfg.color }]} />
 
                             {/* Emoji */}
-                            <View style={[styles.prayerEmojiBg, { backgroundColor: statusCfg.color + "18" }]}>
+                            <View style={styles.prayerEmojiBg}>
                                 <Text style={styles.prayerEmoji}>{item.emoji}</Text>
                             </View>
 
@@ -298,17 +298,20 @@ export default function PrayerListScreen() {
                                 {item.description ? (
                                     <Text style={styles.prayerDesc} numberOfLines={1}>{item.description}</Text>
                                 ) : null}
-                                {/* Tags */}
+                                {/* Tags — inline, no ScrollView inside FlatList */}
                                 {item.tags.length > 0 && (
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 5 }}>
-                                        <View style={{ flexDirection: "row", gap: 5 }}>
-                                            {item.tags.map((tag) => (
-                                                <View key={tag} style={styles.tagChip}>
-                                                    <Text style={styles.tagChipText}>{tag}</Text>
-                                                </View>
-                                            ))}
-                                        </View>
-                                    </ScrollView>
+                                    <View style={{ flexDirection: "row", gap: 5, marginTop: 4, flexWrap: "nowrap" }}>
+                                        {item.tags.slice(0, 2).map((tag) => (
+                                            <View key={tag} style={styles.tagChip}>
+                                                <Text style={styles.tagChipText}>{tag}</Text>
+                                            </View>
+                                        ))}
+                                        {item.tags.length > 2 && (
+                                            <View style={styles.tagChip}>
+                                                <Text style={styles.tagChipText}>+{item.tags.length - 2}</Text>
+                                            </View>
+                                        )}
+                                    </View>
                                 )}
                             </View>
 
@@ -329,17 +332,25 @@ export default function PrayerListScreen() {
             <Modal
                 visible={formVisible}
                 animationType="slide"
-                presentationStyle="pageSheet"
+                presentationStyle="fullScreen"
                 onRequestClose={() => setFormVisible(false)}
             >
-                <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
+                <View style={styles.modalContainer}>
                     {/* Modal Header */}
-                    <View style={styles.modalHeader}>
-                        <Pressable onPress={() => setFormVisible(false)} style={styles.modalHeaderBtn}>
+                    <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
+                        <Pressable
+                            onPress={() => setFormVisible(false)}
+                            style={styles.modalHeaderBtn}
+                            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                        >
                             <Text style={styles.modalCancel}>Cancel</Text>
                         </Pressable>
                         <Text style={styles.modalTitle}>{editingPrayer ? "Edit Prayer" : "New Prayer"}</Text>
-                        <Pressable onPress={saveForm} style={styles.modalHeaderBtn}>
+                        <Pressable
+                            onPress={saveForm}
+                            style={styles.modalHeaderBtn}
+                            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                        >
                             <Text style={[styles.modalSave, { color: "#c084fc" }]}>Save</Text>
                         </Pressable>
                     </View>
@@ -432,14 +443,14 @@ export default function PrayerListScreen() {
             <Modal
                 visible={detailVisible}
                 animationType="slide"
-                presentationStyle="pageSheet"
+                presentationStyle="fullScreen"
                 onRequestClose={() => setDetailVisible(false)}
             >
                 {selectedPrayer && (() => {
                     const statusCfg = STATUS_CONFIG[selectedPrayer.status];
                     return (
-                        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
-                            <View style={styles.modalHeader}>
+                        <View style={styles.modalContainer}>
+                            <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
                                 <Pressable onPress={() => setDetailVisible(false)} style={styles.modalHeaderBtn}>
                                     <Text style={styles.modalCancel}>Close</Text>
                                 </Pressable>
@@ -672,26 +683,29 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#111",
-        borderRadius: 14,
-        marginBottom: 10,
+        borderRadius: 12,
+        marginBottom: 8,
         overflow: "hidden",
         borderWidth: 1,
         borderColor: "#1e1e1e",
-        paddingVertical: 10,
-        paddingRight: 14,
+        paddingVertical: 8,
+        paddingRight: 12,
     },
-    prayerAccent: { width: 4, alignSelf: "stretch" },
+    prayerAccent: { width: 3, alignSelf: "stretch" },
     prayerEmojiBg: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+        width: 34,
+        height: 34,
+        borderRadius: 9,
         alignItems: "center",
         justifyContent: "center",
-        marginHorizontal: 10,
+        marginHorizontal: 8,
+        backgroundColor: "#1a1a1a",
+        borderWidth: 1,
+        borderColor: "#2a2a2a",
     },
-    prayerEmoji: { fontSize: 22 },
-    prayerTitle: { color: "#f0f0f0", fontSize: 15, fontWeight: "600" },
-    prayerDesc: { color: "#555", fontSize: 13, marginTop: 2 },
+    prayerEmoji: { fontSize: 18 },
+    prayerTitle: { color: "#f0f0f0", fontSize: 14, fontWeight: "600" },
+    prayerDesc: { color: "#555", fontSize: 12, marginTop: 1 },
     prayerRight: { alignItems: "center", gap: 4 },
     updateBadge: {
         color: "#c084fc",
@@ -727,17 +741,18 @@ const styles = StyleSheet.create({
     tagPillTextActive: { color: "#c084fc", fontWeight: "600" },
 
     // Modal shared
-    modalContainer: { flex: 1, backgroundColor: "#0d0d0d" },
+    modalContainer: { flex: 1, backgroundColor: "#161616" },
     modalHeader: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+        backgroundColor: "#161616",
         borderBottomWidth: 1,
         borderBottomColor: "#1e1e1e",
     },
-    modalHeaderBtn: { width: 70 },
+    modalHeaderBtn: { width: 70, paddingVertical: 8 },
     modalTitle: { color: "#fff", fontSize: 16, fontWeight: "700", textAlign: "center" },
     modalCancel: { color: "#555", fontSize: 15 },
     modalSave: { fontSize: 15, fontWeight: "600", textAlign: "right" },
