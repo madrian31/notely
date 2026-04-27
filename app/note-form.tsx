@@ -1,4 +1,3 @@
-import { ToolBtn } from "@/app/(tabs)/ToolbarIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
@@ -15,7 +14,81 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Storage, STORAGE_KEYS } from "./storage";
+
+// ─── Toolbar Icons (inlined) ──────────────────────────────────────────────────
+
+type IconName =
+  | "bold" | "italic" | "underline" | "strike"
+  | "heading" | "fontSize"
+  | "color" | "highlight"
+  | "alignLeft" | "alignCenter" | "alignRight"
+  | "mood";
+
+function ToolIcon({ icon, color, activeColor, hasEmotion, emotionColor }: {
+  icon: IconName; color: string; activeColor?: string;
+  hasEmotion?: boolean; emotionColor?: string;
+}) {
+  switch (icon) {
+    case "bold":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><SvgText x="2" y="15" fontSize="16" fontWeight="800" fill={color} fontFamily="Georgia, serif">B</SvgText></Svg>;
+    case "italic":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><SvgText x="5" y="15" fontSize="15" fontStyle="italic" fill={color} fontFamily="Georgia, serif">I</SvgText></Svg>;
+    case "underline":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><SvgText x="3" y="12" fontSize="12" fontWeight="700" fill={color} fontFamily="system-ui, sans-serif">U</SvgText><Line x1="2" y1="16" x2="16" y2="16" stroke={color} strokeWidth="1.8" strokeLinecap="round" /></Svg>;
+    case "strike":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><SvgText x="2" y="15" fontSize="12" fontWeight="600" fill={color} fontFamily="system-ui, sans-serif">ab</SvgText><Line x1="1" y1="9" x2="17" y2="9" stroke={color} strokeWidth="1.6" strokeLinecap="round" /></Svg>;
+    case "heading":
+      return <Svg width={22} height={18} viewBox="0 0 22 18"><SvgText x="0" y="15" fontSize="16" fontWeight="800" fill={color} fontFamily="system-ui, sans-serif">{"H\u2081"}</SvgText></Svg>;
+    case "fontSize":
+      return <Svg width={26} height={18} viewBox="0 0 26 18"><SvgText x="0" y="16" fontSize="18" fontWeight="800" fill={color} fontFamily="Georgia, serif">A</SvgText><SvgText x="17" y="18" fontSize="11" fontWeight="600" fill={color} fontFamily="Georgia, serif">a</SvgText></Svg>;
+    case "color":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><SvgText x="2" y="13" fontSize="14" fontWeight="700" fill={color} fontFamily="Georgia, serif">A</SvgText><Rect x="1" y="14" width="16" height="2.5" rx="1.2" fill={activeColor ?? color} /></Svg>;
+    case "highlight":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><Path d="M4 14 L9 3 L14 14" stroke={color} strokeWidth="1.6" fill="none" strokeLinejoin="round" strokeLinecap="round" /><Line x1="6" y1="10" x2="12" y2="10" stroke={color} strokeWidth="1.4" strokeLinecap="round" /><Rect x="1" y="15" width="16" height="3" rx="1.5" fill="#fef08a" opacity={0.75} /></Svg>;
+    case "alignLeft":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><Line x1="1" y1="4" x2="17" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="1" y1="8" x2="17" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="1" y1="12" x2="11" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="1" y1="16" x2="14" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" /></Svg>;
+    case "alignCenter":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><Line x1="1" y1="4" x2="17" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="1" y1="8" x2="17" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="4" y1="12" x2="14" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="3" y1="16" x2="15" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" /></Svg>;
+    case "alignRight":
+      return <Svg width={18} height={18} viewBox="0 0 18 18"><Line x1="1" y1="4" x2="17" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="1" y1="8" x2="17" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="7" y1="12" x2="17" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" /><Line x1="4" y1="16" x2="17" y2="16" stroke={color} strokeWidth="1.5" strokeLinecap="round" /></Svg>;
+    case "mood":
+      return (
+        <Svg width={18} height={18} viewBox="0 0 18 18">
+          <Circle cx="9" cy="9" r="7" stroke={hasEmotion ? emotionColor : color} strokeWidth="1.4" fill="none" />
+          <Circle cx="6.5" cy="7.5" r="1.1" fill={hasEmotion ? emotionColor : color} />
+          <Circle cx="11.5" cy="7.5" r="1.1" fill={hasEmotion ? emotionColor : color} />
+          {hasEmotion
+            ? <Path d="M6 11.5 Q9 14 12 11.5" stroke={emotionColor} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+            : <Line x1="6" y1="12" x2="12" y2="12" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+          }
+        </Svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function ToolBtn({ icon, active, onPress, activeColor = "#c084fc", hasEmotion, emotionColor }: {
+  icon: IconName; active?: boolean; onPress: () => void;
+  activeColor?: string; hasEmotion?: boolean; emotionColor?: string;
+}) {
+  const iconColor = active ? activeColor : "#888";
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[tbs.btn, active && tbs.btnActive, { backgroundColor: active ? activeColor + "22" : "#1c1c1c" }]}
+    >
+      <ToolIcon icon={icon} color={iconColor} activeColor={activeColor} hasEmotion={hasEmotion} emotionColor={emotionColor} />
+    </TouchableOpacity>
+  );
+}
+
+const tbs = StyleSheet.create({
+  btn: { minWidth: 36, height: 34, borderRadius: 7, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
+  btnActive: { borderWidth: 1, borderColor: "#c084fc33" },
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -869,6 +942,8 @@ const sm = StyleSheet.create({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+
+
 export default function NoteForm() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -890,6 +965,7 @@ export default function NoteForm() {
   const verseRefRef = useRef(paramVerseRef);
   const verseTextRef = useRef(paramVerseText);
   const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
+  const [bodyText, setBodyText] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
   const [fmt, setFmt] = useState<Partial<Segment>>({
     bold: false, italic: false, underline: false, strikethrough: false,
@@ -904,15 +980,13 @@ export default function NoteForm() {
   const [tagInput, setTagInput] = useState("");
   const [selectedValence, setSelectedValence] = useState<number | null>(null);
 
-  // FIX: segHeights moved to ref — prevents re-render on every keystroke
-  const segHeightsRef = useRef<Record<string, number>>({});
-  const [segHeights, setSegHeights] = useState<Record<string, number>>({});
+  // segHeights fully removed — no state/ref needed, TextInput auto-grows via style
 
   const [showDevotionShareModal, setShowDevotionShareModal] = useState(false);
   const [showNoteShareModal, setShowNoteShareModal] = useState(false);
   const [noteDate, setNoteDate] = useState(new Date().toISOString());
   const [editorFocused, setEditorFocused] = useState(false);
-  const hasContent = segments.some((s) => s.text.trim().length > 0);
+  const hasContent = bodyText.trim().length > 0;
   const isDevotionNote = !!(verseRef || verseText);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -962,6 +1036,8 @@ export default function NoteForm() {
       setSegments(segs);
       segsRef.current = segs;
       latestRef.current = { title: existing.title, segments: segs };
+      const loadedText = segs.map(s => s.text).join("\n");
+      setBodyText(loadedText);
       if (existing.emotion) { setEmotion(existing.emotion); emotionRef.current = existing.emotion; setSelectedValence(existing.emotion.valence); }
       if (existing.activities) { setActivities(existing.activities); activitiesRef.current = existing.activities; }
       if (existing.tags) { setTags(existing.tags); tagsRef.current = existing.tags; }
@@ -970,6 +1046,17 @@ export default function NoteForm() {
     } catch (err) {
       console.log("loadNote error:", err);
     }
+  };
+
+  const syncSegmentsFromBody = (text: string) => {
+    const lines = text.split("\n");
+    const current = segsRef.current;
+    const synced = lines.map((line, i) => {
+      const existing = current[i];
+      return existing ? { ...existing, text: line } : defaultSegment({ text: line });
+    });
+    segsRef.current = synced;
+    latestRef.current.segments = synced;
   };
 
   const saveNow = async () => {
@@ -1020,8 +1107,9 @@ export default function NoteForm() {
     router.back();
   };
 
-  const triggerSave = () => {
+  const triggerSave = (currentBodyText?: string) => {
     hasChanges.current = true;
+    if (currentBodyText !== undefined) syncSegmentsFromBody(currentBodyText);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(saveNow, 1000);
   };
@@ -1132,14 +1220,7 @@ export default function NoteForm() {
 
   const toolbarBottom = kbHeight > 0 ? kbHeight : insets.bottom;
 
-  // FIX: handler for segment height changes — only triggers re-render when height actually changes
-  const handleContentSizeChange = (segId: string, height: number) => {
-    const prev = segHeightsRef.current[segId];
-    if (Math.abs((prev ?? 0) - height) > 2) {
-      segHeightsRef.current = { ...segHeightsRef.current, [segId]: height };
-      setSegHeights({ ...segHeightsRef.current });
-    }
-  };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#161616" }}>
@@ -1176,115 +1257,48 @@ export default function NoteForm() {
       ) : null}
 
       {/* Editor */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[s.editorContent, { paddingBottom: kbHeight + 80 }]}
-        keyboardShouldPersistTaps="handled"
-        // FIX: only dismiss keyboard when editor is NOT focused (e.g. user scrolls away intentionally)
-        onScrollBeginDrag={() => { if (!editorFocused) Keyboard.dismiss(); }}
-      >
-        {!hasContent && !editorFocused && (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => inputRefs.current[segments[0]?.id]?.focus()}
-            style={s.emptyEditorHint}
-          >
-            <Text style={s.emptyEditorIcon}>✍️</Text>
-            <Text style={[s.emptyEditorText, { color: journalColor + "99" }]}>
-              Tap here to start writing...
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {segments.map((seg, idx) => {
-          const headingSize = seg.heading ? HEADING_SIZE[seg.heading] : (seg.fontSize ?? 16);
-          const headingWeight = seg.heading ? HEADING_WEIGHT[seg.heading] : "400";
-          const isActive = idx === activeIdx && editorFocused;
-
-          return (
-            <View
-              key={seg.id}
-              style={[
-                s.segWrapper,
-                isActive && {
-                  borderLeftColor: journalColor,
-                  borderLeftWidth: 2,
-                  paddingLeft: 10,
-                  marginLeft: -12,
-                  backgroundColor: journalColor + "08",
-                  borderRadius: 4,
-                },
-              ]}
-            >
-              <TextInput
-                ref={(r) => { inputRefs.current[seg.id] = r; }}
-                placeholder={idx === activeIdx ? "Continue writing..." : ""}
-                placeholderTextColor={journalColor + "40"}
-                style={[
-                  s.segInput,
-                  {
-                    fontSize: headingSize,
-                    fontWeight: headingWeight,
-                    color: seg.color ?? "#f0f0f0",
-                    fontStyle: seg.italic ? "italic" : "normal",
-                    textDecorationLine:
-                      seg.underline && seg.strikethrough ? "underline line-through"
-                        : seg.underline ? "underline"
-                          : seg.strikethrough ? "line-through"
-                            : "none",
-                    textAlign: seg.align ?? "left",
-                    backgroundColor: seg.highlight || "transparent",
-                    height: Math.max(32, segHeights[seg.id] ?? 32),
-                    minHeight: 32,
-                  },
-                ]}
-                value={seg.text}
-                onChangeText={(t) => handleChange(idx, t)}
-                onKeyPress={(e) => handleKeyPress(idx, e)}
-                onFocus={() => { setActiveIdx(idx); setEditorFocused(true); }}
-                onBlur={() => setEditorFocused(false)}
-                onSubmitEditing={() => handleEnter(idx)}
-                // FIX: use ref-based handler to avoid re-renders on every keystroke
-                onContentSizeChange={(e) => handleContentSizeChange(seg.id, e.nativeEvent.contentSize.height)}
-                multiline
-                scrollEnabled={false}
-                selectionColor={journalColor}
-                blurOnSubmit={false}
-              />
-            </View>
-          );
-        })}
-
-        {hasContent && (
-          <Text style={s.wordCount}>
-            {segmentsToPlain(segments).trim().split(/\s+/).filter(Boolean).length} words
-          </Text>
-        )}
-      </ScrollView>
+      <TextInput
+        style={[s.bodyInput, { paddingBottom: kbHeight + 80 } as any]}
+        placeholder="Start writing..."
+        placeholderTextColor={journalColor + "40"}
+        value={bodyText}
+        onChangeText={(t) => {
+          setBodyText(t);
+          latestRef.current.title = title;
+          triggerSave(t);
+        }}
+        onFocus={() => setEditorFocused(true)}
+        onBlur={() => setEditorFocused(false)}
+        multiline
+        scrollEnabled
+        selectionColor={journalColor}
+        autoCorrect
+        textAlignVertical="top"
+      />
+      {bodyText.trim().length > 0 && (
+        <Text style={[s.wordCount, { position: "absolute", bottom: kbHeight + 60, right: 18 }]}>
+          {bodyText.trim().split(/\s+/).filter(Boolean).length} words
+        </Text>
+      )}
 
       {/* Formatting toolbar */}
       <View style={[s.toolbarWrap, { bottom: toolbarBottom }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.toolbarContent}>
-          {/* Text style */}
           <ToolBtn icon="bold" active={!!fmt.bold} onPress={() => toggleFmt("bold")} activeColor={journalColor} />
           <ToolBtn icon="italic" active={!!fmt.italic} onPress={() => toggleFmt("italic")} activeColor={journalColor} />
           <ToolBtn icon="underline" active={!!fmt.underline} onPress={() => toggleFmt("underline")} activeColor={journalColor} />
           <ToolBtn icon="strike" active={!!fmt.strikethrough} onPress={() => toggleFmt("strikethrough")} activeColor={journalColor} />
           <Divider />
-          {/* Heading & size */}
           <ToolBtn icon="heading" active={!!fmt.heading} onPress={() => setPicker("heading")} activeColor={journalColor} />
           <ToolBtn icon="fontSize" onPress={() => setPicker("fontSize")} />
           <Divider />
-          {/* Color & highlight */}
           <ToolBtn icon="color" onPress={() => setPicker("color")} activeColor={fmt.color ?? journalColor} />
           <ToolBtn icon="highlight" active={!!fmt.highlight} onPress={() => setPicker("highlight")} activeColor={journalColor} />
           <Divider />
-          {/* Alignment — always 3 separate buttons */}
           <ToolBtn icon="alignLeft" active={fmt.align === "left"} onPress={() => applyFmt({ align: "left" })} activeColor={journalColor} />
           <ToolBtn icon="alignCenter" active={fmt.align === "center"} onPress={() => applyFmt({ align: "center" })} activeColor={journalColor} />
           <ToolBtn icon="alignRight" active={fmt.align === "right"} onPress={() => applyFmt({ align: "right" })} activeColor={journalColor} />
           <Divider />
-          {/* Mood */}
           <ToolBtn icon="mood" onPress={() => setPicker("mood")} hasEmotion={!!emotion} emotionColor={emotion?.color} />
         </ScrollView>
       </View>
@@ -1516,7 +1530,16 @@ const s = StyleSheet.create({
   segInput: {
     width: "100%", color: "#f0f0f0", paddingVertical: 2, paddingHorizontal: 0,
     backgroundColor: "transparent", marginVertical: 1,
-    ...(Platform.OS === "android" && { underlineColorAndroid: "transparent", textAlignVertical: "top" }),
+    minHeight: 32,
+  } as any,
+  bodyInput: {
+    flex: 1,
+    color: "#f0f0f0",
+    fontSize: 16,
+    lineHeight: 26,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    textAlignVertical: "top",
   },
   wordCount: { color: "#2e2e2e", fontSize: 11, textAlign: "right", marginTop: 12, marginRight: 2 },
   toolbarWrap: { position: "absolute", left: 0, right: 0, backgroundColor: "#111", borderTopWidth: 1, borderTopColor: "#222", zIndex: 100 },
