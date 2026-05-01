@@ -4,21 +4,68 @@ import {
   FlatList,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
+import CreateJournalModal, { JournalIcon } from "../../components/create-journal-modal";
 import { GreetingHeader } from "../../components/greeting-header";
 import { Storage, STORAGE_KEYS } from "../storage";
+
+// ─── Stat Icons ───────────────────────────────────────────────────────────────
+function StatIconJournals({ color = "#888" }: { color?: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 22 22">
+      <Rect x="4" y="6" width="14" height="13" rx="2.5" stroke={color} strokeWidth="1.5" fill="none" />
+      <Rect x="6" y="3" width="12" height="13" rx="2" stroke={color} strokeWidth="1.2" fill="none" />
+      <Line x1="7" y1="11" x2="15" y2="11" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Line x1="7" y1="14" x2="13" y2="14" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function StatIconEntries({ color = "#888" }: { color?: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 22 22">
+      <Path d="M4 4h14v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke={color} strokeWidth="1.5" fill="none" />
+      <Line x1="7" y1="9" x2="15" y2="9" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Line x1="7" y1="12" x2="15" y2="12" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Line x1="7" y1="15" x2="11" y2="15" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Path d="M4 4l7-2 7 2" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function StatIconWords({ color = "#888" }: { color?: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 22 22">
+      <Path d="M3 6h16M3 10h16M3 14h10" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Circle cx="17" cy="17" r="3.5" stroke={color} strokeWidth="1.4" fill="none" />
+      <Line x1="19.5" y1="19.5" x2="21" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function EmptyJournalIcon({ color = "#555" }: { color?: string }) {
+  return (
+    <Svg width={48} height={48} viewBox="0 0 48 48">
+      <Rect x="8" y="12" width="30" height="28" rx="4" stroke={color} strokeWidth="2" fill="none" />
+      <Rect x="12" y="8" width="28" height="28" rx="3.5" stroke={color} strokeWidth="1.8" fill="none" />
+      <Line x1="16" y1="22" x2="32" y2="22" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="16" y1="27" x2="28" y2="27" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="16" y1="32" x2="24" y2="32" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
 
 export type Journal = {
   id: string;
   name: string;
   color: string;
-  emoji: string;
+  emoji: string;   // kept for backward compat with old data
+  iconId: string;  // new SF Symbols-style icon id
   createdAt: string;
 };
 
@@ -30,103 +77,11 @@ type Note = {
 };
 
 const JOURNAL_COLORS = [
-  "#d45f7f",
-  "#e05252",
-  "#d47bb5",
-  "#e08a8a",
-  "#c9956e",
-  "#e0994d",
-  "#3ecfb2",
-  "#4db8e8",
-  "#3a6ed4",
-  "#89b4d4",
-  "#8f9de0",
-  "#9c7ae0",
-  "#ffffff",
-  "#c084fc",
+  "#d45f7f", "#e05252", "#d47bb5", "#e08a8a",
+  "#c9956e", "#e0994d", "#3ecfb2", "#4db8e8",
+  "#3a6ed4", "#89b4d4", "#8f9de0", "#9c7ae0",
+  "#ffffff", "#c084fc",
 ];
-
-const JOURNAL_ICONS = [
-  "😊",
-  "📦",
-  "🏠",
-  "🛏️",
-  "📺",
-  "📚",
-  "📞",
-  "🔑",
-  "🧮",
-  "💳",
-  "🎈",
-  "💡",
-  "🌸",
-  "✈️",
-  "🗺️",
-  "🕹️",
-  "🌐",
-  "🚗",
-  "🚲",
-  "🚢",
-  "🧳",
-  "⛺",
-  "🪧",
-  "📷",
-  "☂️",
-  "🚌",
-  "🚂",
-  "🏍️",
-  "🎒",
-  "🍴",
-  "🥄",
-  "☕",
-  "🧃",
-  "🍷",
-  "🥘",
-  "🥕",
-  "🍎",
-  "🎂",
-  "🍿",
-  "🧺",
-  "⛰️",
-  "☀️",
-  "❄️",
-  "⚡",
-  "🌙",
-  "🌧️",
-  "🔥",
-  "🌈",
-  "🍃",
-  "🌳",
-  "🔭",
-  "⚛️",
-  "🐕",
-  "🐈",
-  "🐦",
-  "🐢",
-  "🚶",
-  "👫",
-  "👨‍👩‍👧",
-  "🤰",
-  "👨‍👩‍👧‍👦",
-  "🧗",
-  "♿",
-  "👋",
-  "👍",
-  "✋",
-  "👁️",
-  "🙂",
-  "😶",
-];
-
-// Returns true if the hex color is perceived as light
-function isLightColor(hex: string): boolean {
-  const c = hex.replace("#", "");
-  const r = parseInt(c.substring(0, 2), 16);
-  const g = parseInt(c.substring(2, 4), 16);
-  const b = parseInt(c.substring(4, 6), 16);
-  // Perceived luminance formula
-  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -139,7 +94,7 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [newJournalName, setNewJournalName] = useState("");
   const [selectedColor, setSelectedColor] = useState(JOURNAL_COLORS[0]);
-  const [selectedIcon, setSelectedIcon] = useState(JOURNAL_ICONS[0]);
+  const [selectedIconId, setSelectedIconId] = useState("journals");
 
   // Press-hold menu
   const [menuJournal, setMenuJournal] = useState<Journal | null>(null);
@@ -189,18 +144,19 @@ export default function HomeScreen() {
     setSelectedColor(
       JOURNAL_COLORS[Math.floor(Math.random() * JOURNAL_COLORS.length)],
     );
-    setSelectedIcon(JOURNAL_ICONS[Math.floor(Math.random() * 8)]);
+    setSelectedIconId("journals");
     setModalVisible(true);
   };
 
-  const saveNewJournal = async () => {
-    const trimmed = newJournalName.trim();
+  const saveNewJournal = async (data: { name: string; color: string; iconId: string }) => {
+    const trimmed = data.name.trim();
     if (!trimmed) return;
     const newJournal: Journal = {
       id: Date.now().toString(),
       name: trimmed,
-      color: selectedColor,
-      emoji: selectedIcon,
+      color: data.color,
+      emoji: data.iconId, // keep field for compatibility
+      iconId: data.iconId,
       createdAt: new Date().toISOString(),
     };
     const updated = [...journals, newJournal];
@@ -225,19 +181,19 @@ export default function HomeScreen() {
     setEditingJournal(journal);
     setNewJournalName(journal.name);
     setSelectedColor(journal.color);
-    setSelectedIcon(journal.emoji);
+    setSelectedIconId(journal.iconId ?? "journals");
     setMenuVisible(false);
     setMenuJournal(null);
     setEditModalVisible(true);
   };
 
-  const saveEditedJournal = async () => {
+  const saveEditedJournal = async (data: { name: string; color: string; iconId: string }) => {
     if (!editingJournal) return;
-    const trimmed = newJournalName.trim();
+    const trimmed = data.name.trim();
     if (!trimmed) return;
     const updated = journals.map((j) =>
       j.id === editingJournal.id
-        ? { ...j, name: trimmed, color: selectedColor, emoji: selectedIcon }
+        ? { ...j, name: trimmed, color: data.color, emoji: data.iconId, iconId: data.iconId }
         : j,
     );
     setJournals(updated);
@@ -271,7 +227,7 @@ export default function HomeScreen() {
         <View
           style={[styles.journalIcon, { backgroundColor: item.color + "22" }]}
         >
-          <Text style={{ fontSize: 22 }}>{item.emoji || "📓"}</Text>
+          <JournalIcon iconId={item.iconId ?? "journals"} color={item.color} size={24} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.journalName}>{item.name}</Text>
@@ -301,17 +257,17 @@ export default function HomeScreen() {
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📚</Text>
+          <StatIconJournals color="#c084fc" />
           <Text style={styles.statValue}>{journals.length}</Text>
           <Text style={styles.statLabel}>Journals</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📝</Text>
+          <StatIconEntries color="#60a5fa" />
           <Text style={styles.statValue}>{totalNotes}</Text>
           <Text style={styles.statLabel}>Entries</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>🔤</Text>
+          <StatIconWords color="#34d399" />
           <Text style={styles.statValue}>{totalWords.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Words</Text>
         </View>
@@ -321,7 +277,7 @@ export default function HomeScreen() {
 
       {journals.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📔</Text>
+          <EmptyJournalIcon color="#333" />
           <Text style={styles.emptyText}>No journals yet</Text>
           <Text style={styles.emptySub}>
             Tap the + button below to get started
@@ -369,12 +325,10 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.menuJournalIcon,
-                    {
-                      backgroundColor: (menuJournal?.color ?? "#c084fc") + "22",
-                    },
+                    { backgroundColor: (menuJournal?.color ?? "#c084fc") + "22" },
                   ]}
                 >
-                  <Text style={{ fontSize: 18 }}>{menuJournal?.emoji}</Text>
+                  <JournalIcon iconId={menuJournal?.iconId ?? "journals"} color={menuJournal?.color ?? "#c084fc"} size={20} />
                 </View>
                 <Text style={styles.menuTitle} numberOfLines={1}>
                   {menuJournal?.name}
@@ -384,7 +338,10 @@ export default function HomeScreen() {
                   style={styles.menuClose}
                   hitSlop={8}
                 >
-                  <Text style={styles.menuCloseText}>✕</Text>
+                  <Svg width={18} height={18} viewBox="0 0 18 18">
+                    <Line x1="4" y1="4" x2="14" y2="14" stroke="#555" strokeWidth="1.8" strokeLinecap="round" />
+                    <Line x1="14" y1="4" x2="4" y2="14" stroke="#555" strokeWidth="1.8" strokeLinecap="round" />
+                  </Svg>
                 </Pressable>
               </View>
 
@@ -395,7 +352,11 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: "#1e1e1e" },
                 ]}
               >
-                <Text style={styles.menuRowIcon}>✏️</Text>
+                <Svg width={18} height={18} viewBox="0 0 18 18">
+                  <Path d="M3 15 L5 10 L13 2 L16 5 L8 13 Z" stroke="#e0e0e0" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+                  <Line x1="11" y1="3.5" x2="14.5" y2="7" stroke="#e0e0e0" strokeWidth="1.5" strokeLinecap="round" />
+                  <Line x1="3" y1="15" x2="7" y2="15" stroke="#e0e0e0" strokeWidth="1.5" strokeLinecap="round" />
+                </Svg>
                 <Text style={styles.menuRowText}>Edit Journal</Text>
               </Pressable>
 
@@ -408,7 +369,12 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: "#1e1e1e" },
                 ]}
               >
-                <Text style={styles.menuRowIcon}>🗑️</Text>
+                <Svg width={18} height={18} viewBox="0 0 18 18">
+                  <Polyline points="3,5 15,5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
+                  <Path d="M6 5V3h6v2" stroke="#f87171" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M4 5l1 10h8l1-10" stroke="#f87171" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <Line x1="9" y1="8" x2="9" y2="13" stroke="#f87171" strokeWidth="1.3" strokeLinecap="round" />
+                </Svg>
                 <Text style={[styles.menuRowText, { color: "#f87171" }]}>
                   Delete Journal
                 </Text>
@@ -418,230 +384,22 @@ export default function HomeScreen() {
         </Pressable>
       </Modal>
 
-      {/* ── Edit Journal Modal (full-screen, same as create) ── */}
-      <Modal
+      {/* ── Edit Journal Modal ── */}
+      <CreateJournalModal
         visible={editModalVisible}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <View
-          style={[
-            styles.fsContainer,
-            { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 },
-          ]}
-        >
-          <View style={styles.fsHeader}>
-            <Pressable
-              onPress={() => setEditModalVisible(false)}
-              style={styles.fsHeaderBtn}
-              hitSlop={12}
-            >
-              <View style={styles.fsCloseCircle}>
-                <Text style={styles.fsCloseText}>✕</Text>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={saveEditedJournal}
-              style={styles.fsHeaderBtn}
-              hitSlop={12}
-            >
-              <View
-                style={[
-                  styles.fsSaveCircle,
-                  { backgroundColor: selectedColor },
-                ]}
-              >
-                <Text style={[styles.fsSaveText, { color: isLightColor(selectedColor) ? "#111" : "#fff" }]}>✓</Text>
-              </View>
-            </Pressable>
-          </View>
+        onClose={() => setEditModalVisible(false)}
+        onSave={saveEditedJournal}
+        initialName={editingJournal?.name ?? ""}
+        initialColor={editingJournal?.color ?? "#80b0e8"}
+        initialIconId={editingJournal?.iconId ?? "journals"}
+      />
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.fsPreviewWrap}>
-              <View
-                style={[
-                  styles.fsPreviewOuter,
-                  { backgroundColor: selectedColor + "28" },
-                ]}
-              >
-                <Text style={styles.fsPreviewEmoji}>{selectedIcon}</Text>
-              </View>
-            </View>
-
-            <TextInput
-              style={styles.fsNameInput}
-              value={newJournalName}
-              onChangeText={setNewJournalName}
-              placeholder="Journal name"
-              placeholderTextColor="#666"
-              autoFocus
-              selectionColor={selectedColor}
-              returnKeyType="done"
-              onSubmitEditing={saveEditedJournal}
-              maxLength={40}
-              textAlign="center"
-            />
-
-            <View style={styles.fsColorGrid}>
-              {JOURNAL_COLORS.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => setSelectedColor(c)}
-                  style={[
-                    styles.fsColorDot,
-                    { backgroundColor: c },
-                    selectedColor === c && [
-                      styles.fsColorDotSelected,
-                      { borderColor: c === "#ffffff" ? "#888" : c },
-                    ],
-                  ]}
-                />
-              ))}
-            </View>
-
-            <View style={styles.fsIconGrid}>
-              {JOURNAL_ICONS.map((icon) => (
-                <Pressable
-                  key={icon}
-                  onPress={() => setSelectedIcon(icon)}
-                  style={[
-                    styles.fsIconBtn,
-                    selectedIcon === icon && {
-                      borderColor: selectedColor,
-                      borderWidth: 2,
-                      backgroundColor: selectedColor + "18",
-                    },
-                  ]}
-                >
-                  <Text style={styles.fsIconEmoji}>{icon}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* ── Full-Screen iOS-style Create Journal Modal ── */}
-      <Modal
+      {/* ── Create Journal Modal ── */}
+      <CreateJournalModal
         visible={modalVisible}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View
-          style={[
-            styles.fsContainer,
-            { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 },
-          ]}
-        >
-          {/* Header row */}
-          <View style={styles.fsHeader}>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              style={styles.fsHeaderBtn}
-              hitSlop={12}
-            >
-              <View style={styles.fsCloseCircle}>
-                <Text style={styles.fsCloseText}>✕</Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              onPress={saveNewJournal}
-              style={styles.fsHeaderBtn}
-              hitSlop={12}
-            >
-              <View
-                style={[
-                  styles.fsSaveCircle,
-                  { backgroundColor: selectedColor },
-                ]}
-              >
-                <Text style={[styles.fsSaveText, { color: isLightColor(selectedColor) ? "#111" : "#fff" }]}>✓</Text>
-              </View>
-            </Pressable>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Icon Preview */}
-            <View style={styles.fsPreviewWrap}>
-              <View
-                style={[
-                  styles.fsPreviewOuter,
-                  { backgroundColor: selectedColor + "28" },
-                ]}
-              >
-                <Text style={styles.fsPreviewEmoji}>{selectedIcon}</Text>
-              </View>
-            </View>
-
-            {/* Name input */}
-            <TextInput
-              style={styles.fsNameInput}
-              value={newJournalName}
-              onChangeText={setNewJournalName}
-              placeholder="Journal name"
-              placeholderTextColor="#666"
-              autoFocus
-              selectionColor={selectedColor}
-              returnKeyType="done"
-              onSubmitEditing={saveNewJournal}
-              maxLength={40}
-              textAlign="center"
-            />
-
-            {/* Color Picker */}
-            <View style={styles.fsColorGrid}>
-              {JOURNAL_COLORS.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => setSelectedColor(c)}
-                  style={[
-                    styles.fsColorDot,
-                    { backgroundColor: c },
-                    selectedColor === c && [
-                      styles.fsColorDotSelected,
-                      { borderColor: c === "#ffffff" ? "#888" : c },
-                    ],
-                  ]}
-                />
-              ))}
-            </View>
-
-            {/* Icon Grid */}
-            <View style={styles.fsIconGrid}>
-              {JOURNAL_ICONS.map((icon) => {
-                const isSelected = selectedIcon === icon;
-                return (
-                  <Pressable
-                    key={icon}
-                    onPress={() => setSelectedIcon(icon)}
-                    style={[
-                      styles.fsIconBtn,
-                      isSelected && {
-                        borderColor: selectedColor,
-                        borderWidth: 2,
-                        backgroundColor: selectedColor + "18",
-                      },
-                    ]}
-                  >
-                    <Text style={styles.fsIconEmoji}>{icon}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onSave={saveNewJournal}
+      />
     </View>
   );
 }

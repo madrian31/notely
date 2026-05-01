@@ -17,6 +17,81 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Storage, STORAGE_KEYS } from "./storage";
 
+// ─── UI Icons (non-toolbar) ───────────────────────────────────────────────────
+
+function IconChevronLeft({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Path d="M13 4 L7 10 L13 16" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function IconShare({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Path d="M10 2 L14 6 L10 10" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M14 6 H6 a4 4 0 0 0 -4 4 v2" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconDownload({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Line x1="8" y1="2" x2="8" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M4 8 L8 12 L12 8" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="2" y1="14" x2="14" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconBible({ color = "#7c5fc4" }: { color?: string }) {
+  return (
+    <Svg width={13} height={13} viewBox="0 0 13 13">
+      <Rect x="1" y="1" width="11" height="11" rx="1.5" stroke={color} strokeWidth="1.2" fill="none" />
+      <Line x1="6.5" y1="3" x2="6.5" y2="10" stroke={color} strokeWidth="1" strokeLinecap="round" />
+      <Line x1="3" y1="6.5" x2="10" y2="6.5" stroke={color} strokeWidth="1" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconX({ color = "#555" }: { color?: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 18 18">
+      <Line x1="4" y1="4" x2="14" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="14" y1="4" x2="4" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconCheck({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Path d="M3 8 L6.5 12 L13 4" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconInfo({ color = "#666" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Circle cx="8" cy="8" r="6.5" stroke={color} strokeWidth="1.3" fill="none" />
+      <Line x1="8" y1="7" x2="8" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Circle cx="8" cy="5" r="0.8" fill={color} />
+    </Svg>
+  );
+}
+
+function IconArrowUp({ color = "#444" }: { color?: string }) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Line x1="7" y1="12" x2="7" y2="2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M3 6 L7 2 L11 6" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // ─── Toolbar Icons (inlined) ──────────────────────────────────────────────────
 
 type IconName =
@@ -778,7 +853,7 @@ function ShareDevotionModal({ visible, onClose, title, verseRef, verseText, segm
               <Text style={sm.headerSub}>Choose a card theme to share</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={sm.closeBtn}>
-              <Text style={sm.closeText}>✕</Text>
+              <IconX color="#555" />
             </TouchableOpacity>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
@@ -786,7 +861,10 @@ function ShareDevotionModal({ visible, onClose, title, verseRef, verseText, segm
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16 }}>
                 <DevotionCardPreview title={title} verseRef={verseRef} verseText={verseText} segments={segments} date={date} theme={theme} />
               </ScrollView>
-              <Text style={sm.previewNote}>↑ Preview — buong content kasama sa actual image</Text>
+              <View style={sm.previewNoteRow}>
+                <IconArrowUp color="#444" />
+                <Text style={sm.previewNote}> Preview — buong content kasama sa actual image</Text>
+              </View>
             </View>
             <Text style={sm.sectionLabel}>THEME</Text>
             <View style={sm.themeRow}>
@@ -797,7 +875,7 @@ function ShareDevotionModal({ visible, onClose, title, verseRef, verseText, segm
                   <Text style={[sm.themeLabel, { color: t.accentLight }]}>{t.label}</Text>
                   {selectedTheme === idx && (
                     <View style={[sm.themeCheck, { backgroundColor: t.accent }]}>
-                      <Text style={sm.themeCheckText}>✓</Text>
+                      <IconCheck color="#fff" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -807,18 +885,24 @@ function ShareDevotionModal({ visible, onClose, title, verseRef, verseText, segm
               <View style={sm.statusBox}><Text style={[sm.statusText, { color: journalColor }]}>{status}</Text></View>
             ) : (
               <View style={sm.tipBox}>
-                <Text style={sm.tipText}>
-                  {Platform.OS === "web"
-                    ? "💡 In the browser, the image will be downloaded. You can now share it in your Messenger group!"
-                    : "💡 Share the image on Messenger, Facebook, or anywhere you like!"}
-                </Text>
+                <View style={sm.tipRow}>
+                  <IconInfo />
+                  <Text style={sm.tipText}>
+                    {Platform.OS === "web"
+                      ? " In the browser, the image will be downloaded. You can now share it in your Messenger group!"
+                      : " Share the image on Messenger, Facebook, or anywhere you like!"}
+                  </Text>
+                </View>
               </View>
             )}
             <TouchableOpacity onPress={handleShare} disabled={isCapturing}
               style={[sm.shareBtn, { backgroundColor: journalColor }, isCapturing && { opacity: 0.6 }]}>
-              <Text style={sm.shareBtnText}>
-                {isCapturing ? status || "Working..." : Platform.OS === "web" ? "⬇️  Download as Image" : "📤  Share as Image"}
-              </Text>
+              <View style={sm.shareBtnInner}>
+                {!isCapturing && (Platform.OS === "web" ? <IconDownload color="#fff" /> : <IconShare color="#fff" />)}
+                <Text style={sm.shareBtnText}>
+                  {isCapturing ? status || "Working..." : Platform.OS === "web" ? "  Download as Image" : "  Share as Image"}
+                </Text>
+              </View>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -869,7 +953,7 @@ function ShareNoteModal({ visible, onClose, title, segments, date, emotion, tags
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={sm.closeBtn}>
-              <Text style={sm.closeText}>✕</Text>
+              <IconX color="#555" />
             </TouchableOpacity>
           </View>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
@@ -877,7 +961,10 @@ function ShareNoteModal({ visible, onClose, title, segments, date, emotion, tags
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16 }}>
                 <NoteCardPreview title={title} segments={segments} date={date} emotion={emotion} tags={tags} journalName={journalName} accentColor={journalColor} theme={theme} />
               </ScrollView>
-              <Text style={sm.previewNote}>↑ Preview — buong content kasama sa actual image</Text>
+              <View style={sm.previewNoteRow}>
+                <IconArrowUp color="#444" />
+                <Text style={sm.previewNote}> Preview — buong content kasama sa actual image</Text>
+              </View>
             </View>
             <Text style={sm.sectionLabel}>BACKGROUND</Text>
             <View style={sm.themeRow}>
@@ -888,7 +975,7 @@ function ShareNoteModal({ visible, onClose, title, segments, date, emotion, tags
                   <Text style={[sm.themeLabel, { color: journalColor }]}>{t.label}</Text>
                   {selectedTheme === idx && (
                     <View style={[sm.themeCheck, { backgroundColor: journalColor }]}>
-                      <Text style={sm.themeCheckText}>✓</Text>
+                      <IconCheck color="#fff" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -898,14 +985,20 @@ function ShareNoteModal({ visible, onClose, title, segments, date, emotion, tags
               <View style={sm.statusBox}><Text style={[sm.statusText, { color: journalColor }]}>{status}</Text></View>
             ) : (
               <View style={sm.tipBox}>
-                <Text style={sm.tipText}>💡 Ang buong laman ng note ay kasama sa image — walang nababawas!</Text>
+                <View style={sm.tipRow}>
+                  <IconInfo />
+                  <Text style={sm.tipText}> Ang buong laman ng note ay kasama sa image — walang nababawas!</Text>
+                </View>
               </View>
             )}
             <TouchableOpacity onPress={handleShare} disabled={isCapturing}
               style={[sm.shareBtn, { backgroundColor: journalColor }, isCapturing && { opacity: 0.6 }]}>
-              <Text style={sm.shareBtnText}>
-                {isCapturing ? status || "Working..." : Platform.OS === "web" ? "⬇️  Download as Image" : "📤  Share as Image"}
-              </Text>
+              <View style={sm.shareBtnInner}>
+                {!isCapturing && (Platform.OS === "web" ? <IconDownload color="#fff" /> : <IconShare color="#fff" />)}
+                <Text style={sm.shareBtnText}>
+                  {isCapturing ? status || "Working..." : Platform.OS === "web" ? "  Download as Image" : "  Share as Image"}
+                </Text>
+              </View>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -924,19 +1017,21 @@ const sm = StyleSheet.create({
   closeBtn: { padding: 4 },
   closeText: { color: "#555", fontSize: 18 },
   cardPreviewWrap: { alignItems: "center", paddingVertical: 20, backgroundColor: "#0a0a0a", borderBottomWidth: 1, borderBottomColor: "#1e1e1e" },
-  previewNote: { color: "#444", fontSize: 11, marginTop: 8, textAlign: "center" },
+  previewNote: { color: "#444", fontSize: 11, textAlign: "center" },
+  previewNoteRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 8 },
   sectionLabel: { color: "#444", fontSize: 11, fontWeight: "700", letterSpacing: 1, marginHorizontal: 20, marginTop: 20, marginBottom: 12 },
   themeRow: { flexDirection: "row", paddingHorizontal: 16, gap: 10 },
   themeBtn: { flex: 1, alignItems: "center", borderRadius: 14, borderWidth: 1, paddingVertical: 14, paddingHorizontal: 4, gap: 5, position: "relative" },
   themeEmoji: { fontSize: 20 },
   themeLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
   themeCheck: { position: "absolute", top: 6, right: 6, width: 16, height: 16, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  themeCheckText: { color: "#fff", fontSize: 9, fontWeight: "800" },
   statusBox: { marginHorizontal: 20, marginTop: 18, backgroundColor: "#1a1a1a", borderRadius: 12, padding: 12, alignItems: "center" },
   statusText: { fontSize: 13, fontWeight: "600" },
   tipBox: { marginHorizontal: 20, marginTop: 18, backgroundColor: "#1a1a1a", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#252525" },
-  tipText: { color: "#666", fontSize: 12, lineHeight: 18 },
+  tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
+  tipText: { color: "#666", fontSize: 12, lineHeight: 18, flex: 1 },
   shareBtn: { marginHorizontal: 20, marginTop: 16, paddingVertical: 15, borderRadius: 14, alignItems: "center" },
+  shareBtnInner: { flexDirection: "row", alignItems: "center", gap: 8 },
   shareBtnText: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.3 },
 });
 
@@ -1227,13 +1322,15 @@ export default function NoteForm() {
       {/* Top bar */}
       <View style={[s.topBar, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={handleBack} style={s.backBtn} disabled={isSavingUI}>
-          <Text style={[s.backText, { color: isSavingUI ? "#555" : journalColor }]}>
-            {isSavingUI ? "Saving..." : "‹ Back"}
-          </Text>
+          {isSavingUI
+            ? <Text style={[s.backText, { color: "#555" }]}>Saving...</Text>
+            : <View style={s.backInner}><IconChevronLeft color={journalColor} /><Text style={[s.backText, { color: journalColor }]}>Back</Text></View>
+          }
         </TouchableOpacity>
         {(hasContent || title.trim() || verseText) ? (
           <TouchableOpacity onPress={handleShare} style={[s.shareBtn, { borderColor: journalColor + "55" }]}>
-            <Text style={[s.shareBtnText, { color: journalColor }]}>📤 Share</Text>
+            <IconShare color={journalColor} />
+            <Text style={[s.shareBtnText, { color: journalColor }]}>Share</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -1251,7 +1348,10 @@ export default function NoteForm() {
       {/* Bible Verse Card */}
       {verseText ? (
         <View style={s.verseCard}>
-          <Text style={s.verseCardRef}>📖 {verseRef}</Text>
+          <View style={s.verseCardRefRow}>
+            <IconBible />
+            <Text style={s.verseCardRef}> {verseRef}</Text>
+          </View>
           <Text style={s.verseCardText}>{verseText.replace(/^"|"$/g, "").trim()}</Text>
         </View>
       ) : null}
@@ -1350,7 +1450,7 @@ export default function NoteForm() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: "center" }}>
             {tags.map((tag) => (
               <TouchableOpacity key={tag} onPress={() => removeTag(tag)} style={s.tagPill}>
-                <Text style={s.tagPillText}>#{tag} ✕</Text>
+                <Text style={s.tagPillText}>#{tag} </Text><IconX color="#888" />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -1365,7 +1465,7 @@ export default function NoteForm() {
             <View style={s.sheetHeader}>
               <Text style={s.sheetTitle}>How are you feeling?</Text>
               <TouchableOpacity onPress={() => setPicker(null)}>
-                <Text style={s.sheetClose}>✕</Text>
+                <IconX color="#555" />
               </TouchableOpacity>
             </View>
             <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -1398,7 +1498,7 @@ export default function NoteForm() {
                             {INTENSITY_LABELS[i - 1]} — {def.words[i - 1]}
                           </Text>
                         </View>
-                        {isActive && <Text style={{ color: def.color }}>✓</Text>}
+                        {isActive && <IconCheck color={def.color} />}
                       </TouchableOpacity>
                     );
                   })}
@@ -1445,7 +1545,7 @@ export default function NoteForm() {
                 <View style={s.tagPillsWrap}>
                   {tags.map((tag) => (
                     <TouchableOpacity key={tag} onPress={() => removeTag(tag)} style={s.tagPill}>
-                      <Text style={s.tagPillText}>#{tag} ✕</Text>
+                      <Text style={s.tagPillText}>#{tag} </Text><IconX color="#888" />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1487,7 +1587,7 @@ function BottomSheet({ visible, title, onClose, children }: {
           <View style={s.sheetHandle} />
           <View style={s.sheetHeader}>
             <Text style={s.sheetTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}><Text style={s.sheetClose}>✕</Text></TouchableOpacity>
+            <TouchableOpacity onPress={onClose}><IconX color="#555" /></TouchableOpacity>
           </View>
           <ScrollView style={{ maxHeight: 340 }}>{children}</ScrollView>
         </View>
@@ -1505,7 +1605,7 @@ function ModalRow({ label, active, onPress, extra, accentColor }: {
     <TouchableOpacity onPress={onPress} style={[s.sheetRow, active && { backgroundColor: accent + "22" }]}>
       <Text style={[s.sheetRowTxt, active && { color: accent }]}>{label}</Text>
       {extra}
-      {active && <Text style={{ color: accent, marginLeft: "auto" }}>✓</Text>}
+      {active && <IconCheck color={accent} />}
     </TouchableOpacity>
   );
 }
@@ -1515,12 +1615,14 @@ function ModalRow({ label, active, onPress, extra, accentColor }: {
 const s = StyleSheet.create({
   topBar: { paddingHorizontal: 16, paddingBottom: 8, backgroundColor: "#161616", flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   backBtn: { alignSelf: "flex-start" },
+  backInner: { flexDirection: "row", alignItems: "center", gap: 2 },
   backText: { fontSize: 16, fontWeight: "500" },
-  shareBtn: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  shareBtn: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 6 },
   shareBtnText: { fontSize: 13, fontWeight: "600" },
   titleInput: { backgroundColor: "#161616", color: "#f0f0f0", fontSize: 20, fontWeight: "700", paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#1e1e1e" },
   verseCard: { marginHorizontal: 18, marginTop: 14, marginBottom: 4, backgroundColor: "#0e0e1a", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#1e1e35" },
-  verseCardRef: { color: "#7c5fc4", fontSize: 11, fontWeight: "700", letterSpacing: 0.5, marginBottom: 6 },
+  verseCardRefRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  verseCardRef: { color: "#7c5fc4", fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
   verseCardText: { color: "#b8aaee", fontSize: 14, fontStyle: "italic", lineHeight: 22 },
   editorContent: { paddingHorizontal: 18, paddingTop: 14 },
   emptyEditorHint: { alignItems: "center", paddingVertical: 32, gap: 10 },

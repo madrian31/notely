@@ -2,7 +2,310 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Line, Path, Polygon, Polyline, Rect } from "react-native-svg";
 import { Storage, STORAGE_KEYS } from "../storage";
+
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+function IconCalendar({ color = "#888", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Rect x="2" y="3" width="14" height="13" rx="2" stroke={color} strokeWidth="1.4" fill="none" />
+      <Line x1="5" y1="2" x2="5" y2="4" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <Line x1="13" y1="2" x2="13" y2="4" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <Line x1="2" y1="7" x2="16" y2="7" stroke={color} strokeWidth="1.2" />
+      <Circle cx="9" cy="12" r="1.5" fill={color} opacity={0.7} />
+    </Svg>
+  );
+}
+
+function IconClock({ color = "#888", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Circle cx="9" cy="9" r="7" stroke={color} strokeWidth="1.4" fill="none" />
+      <Line x1="9" y1="5" x2="9" y2="9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="9" y1="9" x2="12" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconPen({ color = "#888", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Path d="M3 15 L4.5 10 L13 2 L16 5 L7.5 13.5 Z" stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+      <Line x1="11" y1="3.5" x2="14.5" y2="7" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <Line x1="3" y1="15" x2="7" y2="15" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconFire({ color = "#ef4444", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Path d="M9 2c0 3.5-3.5 4-3.5 7.5A4.5 4.5 0 0014 9.5c0-5-3.5-5-3-9.5C9.5 1 7 4.5 6.5 6.5 6 4.5 5 3 5 3c0 3.5 2 4.5 2 7a2.5 2.5 0 005 0c0-3.5-2-4.5-2-8z" stroke={color} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconTrendUp({ color = "#34d399", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Polyline points="2,14 6,9 10,11 16,4" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Polyline points="12,4 16,4 16,8" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconTrendDown({ color = "#f97316", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Polyline points="2,4 6,9 10,7 16,14" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Polyline points="12,14 16,14 16,10" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconChat({ color = "#818cf8", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Path d="M2 3a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 3V3z" stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+      <Line x1="5" y1="6" x2="13" y2="6" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      <Line x1="5" y1="9" x2="10" y2="9" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconMedal({ color = "#fbbf24", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Circle cx="9" cy="11" r="5" stroke={color} strokeWidth="1.4" fill="none" />
+      <Path d="M6 6.5 L5 2 L9 4 L13 2 L12 6.5" stroke={color} strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconTag({ color = "#818cf8", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 18 18">
+      <Path d="M2 2h6l8 8-6 6-8-8V2z" stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+      <Circle cx="6" cy="6" r="1.5" fill={color} />
+    </Svg>
+  );
+}
+
+function IconChartBar({ color = "#818cf8", size = 40 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 40 40">
+      <Rect x="4" y="20" width="7" height="14" rx="2" stroke={color} strokeWidth="1.5" fill="none" />
+      <Rect x="16" y="12" width="7" height="22" rx="2" stroke={color} strokeWidth="1.5" fill="none" />
+      <Rect x="28" y="6" width="7" height="28" rx="2" stroke={color} strokeWidth="1.5" fill="none" />
+      <Line x1="2" y1="34" x2="38" y2="34" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+const MOOD_ICONS = [
+  (s: number) => (
+    <Svg width={s} height={s} viewBox="0 0 12 12">
+      <Circle cx="6" cy="6" r="5" stroke="#818cf8" strokeWidth="1.2" fill="none" />
+      <Circle cx="4" cy="5" r="0.8" fill="#818cf8" />
+      <Circle cx="8" cy="5" r="0.8" fill="#818cf8" />
+      <Path d="M3.5 7.5 Q6 9.5 8.5 7.5" stroke="#818cf8" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+    </Svg>
+  ),
+  (s: number) => (
+    <Svg width={s} height={s} viewBox="0 0 12 12">
+      <Circle cx="6" cy="6" r="5" stroke="#34d399" strokeWidth="1.2" fill="none" />
+      <Circle cx="4" cy="5" r="0.8" fill="#34d399" />
+      <Circle cx="8" cy="5" r="0.8" fill="#34d399" />
+      <Path d="M4 7.5 Q6 9 8 7.5" stroke="#34d399" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+    </Svg>
+  ),
+  (s: number) => (
+    <Svg width={s} height={s} viewBox="0 0 12 12">
+      <Circle cx="6" cy="6" r="5" stroke="#a3a3a3" strokeWidth="1.2" fill="none" />
+      <Circle cx="4" cy="5" r="0.8" fill="#a3a3a3" />
+      <Circle cx="8" cy="5" r="0.8" fill="#a3a3a3" />
+      <Line x1="4" y1="8" x2="8" y2="8" stroke="#a3a3a3" strokeWidth="1.1" strokeLinecap="round" />
+    </Svg>
+  ),
+  (s: number) => (
+    <Svg width={s} height={s} viewBox="0 0 12 12">
+      <Circle cx="6" cy="6" r="5" stroke="#f97316" strokeWidth="1.2" fill="none" />
+      <Circle cx="4" cy="5" r="0.8" fill="#f97316" />
+      <Circle cx="8" cy="5" r="0.8" fill="#f97316" />
+      <Path d="M4 9 Q6 7 8 9" stroke="#f97316" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+    </Svg>
+  ),
+  (s: number) => (
+    <Svg width={s} height={s} viewBox="0 0 12 12">
+      <Circle cx="6" cy="6" r="5" stroke="#ef4444" strokeWidth="1.2" fill="none" />
+      <Circle cx="4" cy="5" r="0.8" fill="#ef4444" />
+      <Circle cx="8" cy="5" r="0.8" fill="#ef4444" />
+      <Path d="M3.5 9.5 Q6 7 8.5 9.5" stroke="#ef4444" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+    </Svg>
+  ),
+];
+
+function MilestoneIcon({ id, size = 28, unlocked }: { id: string; size?: number; unlocked: boolean }) {
+  const color = unlocked ? "#818cf8" : "#333";
+  switch (id) {
+
+    // 🌱 Sprout — universally "beginning / first step"
+    case "first": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* stem */}
+        <Line x1="14" y1="22" x2="14" y2="13" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+        {/* ground line */}
+        <Line x1="9" y1="22" x2="19" y2="22" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+        {/* left leaf */}
+        <Path d="M14 16 Q9 14 8 9 Q12 8 14 13" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* right leaf */}
+        <Path d="M14 14 Q19 12 20 7 Q16 8 14 13" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+
+    // 🔥 Flame — "streak / fire / momentum"
+    case "week": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* outer flame */}
+        <Path
+          d="M14 4 C14 4 20 10 20 16 C20 20.4 17.3 24 14 24 C10.7 24 8 20.4 8 16 C8 13 9.5 10.5 11 9 C11 12 12.5 13.5 14 14 C14 11 13 7.5 14 4Z"
+          stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round"
+        />
+        {/* inner core */}
+        <Path
+          d="M14 15 C14 15 16.5 17 16.5 19.5 C16.5 21.4 15.4 23 14 23 C12.6 23 11.5 21.4 11.5 19.5 C11.5 17 14 15 14 15Z"
+          stroke={color} strokeWidth="1.2" fill="none"
+        />
+      </Svg>
+    );
+
+    // 📅 Calendar with check — "30-day calendar streak"
+    case "month": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        <Rect x="3" y="5" width="22" height="19" rx="3" stroke={color} strokeWidth="1.4" fill="none" />
+        <Line x1="3" y1="11" x2="25" y2="11" stroke={color} strokeWidth="1.2" />
+        <Line x1="9" y1="3" x2="9" y2="7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        <Line x1="19" y1="3" x2="19" y2="7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        {/* big checkmark */}
+        <Path d="M9 18 L13 22 L20 14" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+
+    // 📄 Stacked notes — "10 entries / you've written entries"
+    case "ten": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* back page */}
+        <Rect x="8" y="4" width="14" height="18" rx="2" stroke={color} strokeWidth="1.2" fill="none" opacity={0.4} />
+        {/* middle page */}
+        <Rect x="6" y="6" width="14" height="18" rx="2" stroke={color} strokeWidth="1.2" fill="none" opacity={0.65} />
+        {/* front page */}
+        <Rect x="4" y="8" width="14" height="18" rx="2" stroke={color} strokeWidth="1.4" fill="none" />
+        <Line x1="7" y1="13" x2="15" y2="13" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+        <Line x1="7" y1="17" x2="13" y2="17" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+      </Svg>
+    );
+
+    // 🏆 Trophy cup — "50 entries / committed journaler"
+    case "fifty": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* cup body */}
+        <Path d="M8 5 H20 L18 16 Q14 19 10 16 Z" stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+        {/* handles */}
+        <Path d="M8 7 Q4 7 4 11 Q4 14 8 14" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <Path d="M20 7 Q24 7 24 11 Q24 14 20 14" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        {/* stem */}
+        <Line x1="14" y1="19" x2="14" y2="23" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+        {/* base */}
+        <Line x1="9" y1="23" x2="19" y2="23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      </Svg>
+    );
+
+    // 🥇 Medal — "100 entries / century milestone"
+    case "hundred": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* ribbon left */}
+        <Path d="M11 4 L9 10" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity={0.7} />
+        {/* ribbon right */}
+        <Path d="M17 4 L19 10" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity={0.7} />
+        {/* medal circle */}
+        <Circle cx="14" cy="18" r="8" stroke={color} strokeWidth="1.5" fill="none" />
+        {/* star inside */}
+        <Polygon points="14,12 15.5,16.5 20,16.5 16.5,19 17.8,23.5 14,21 10.2,23.5 11.5,19 8,16.5 12.5,16.5"
+          stroke={color} strokeWidth="1" fill="none" strokeLinejoin="round" />
+      </Svg>
+    );
+
+    // ✒️ Quill / feather pen — "wordsmith / 10k words written"
+    case "wordsmith": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* feather body */}
+        <Path d="M22 4 C22 4 12 8 8 18 L10 20 C16 12 22 8 24 4 Z"
+          stroke={color} strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+        {/* spine */}
+        <Line x1="22" y1="4" x2="8" y2="22" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+        {/* nib tip */}
+        <Path d="M8 22 L6 24 L9 23 Z" stroke={color} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+        {/* barbs left */}
+        <Line x1="18" y1="8" x2="14" y2="14" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+        <Line x1="15" y1="11" x2="11" y2="17" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+      </Svg>
+    );
+
+    // 📖 Open book — "novelist / 50k words"
+    case "novelist": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* left page */}
+        <Path d="M14 8 Q10 6 4 7 L4 22 Q10 21 14 23 Z"
+          stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+        {/* right page */}
+        <Path d="M14 8 Q18 6 24 7 L24 22 Q18 21 14 23 Z"
+          stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+        {/* spine */}
+        <Line x1="14" y1="8" x2="14" y2="23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        {/* left lines */}
+        <Line x1="7" y1="12" x2="12" y2="11.5" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+        <Line x1="7" y1="15" x2="12" y2="14.5" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+        {/* right lines */}
+        <Line x1="21" y1="12" x2="16" y2="11.5" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+        <Line x1="21" y1="15" x2="16" y2="14.5" stroke={color} strokeWidth="1" strokeLinecap="round" opacity={0.6} />
+      </Svg>
+    );
+
+    // 🎯 Bullseye / target — "consistent / journaled 25 days"
+    case "consistent": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        <Circle cx="14" cy="14" r="11" stroke={color} strokeWidth="1.4" fill="none" />
+        <Circle cx="14" cy="14" r="7" stroke={color} strokeWidth="1.4" fill="none" />
+        <Circle cx="14" cy="14" r="3" stroke={color} strokeWidth="1.4" fill="none" />
+        <Circle cx="14" cy="14" r="1.5" fill={color} />
+      </Svg>
+    );
+
+    // 💡 Lightbulb — "deep thinker / 500+ word entry"
+    case "deep": return (
+      <Svg width={size} height={size} viewBox="0 0 28 28">
+        {/* bulb */}
+        <Path d="M9 13 Q9 7 14 7 Q19 7 19 13 Q19 17 16 19 L12 19 Q9 17 9 13 Z"
+          stroke={color} strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+        {/* base bands */}
+        <Line x1="12" y1="20" x2="16" y2="20" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+        <Line x1="12" y1="22" x2="16" y2="22" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+        {/* tip */}
+        <Line x1="13" y1="24" x2="15" y2="24" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+        {/* filament */}
+        <Path d="M12 15 Q14 12 16 15" stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        {/* rays */}
+        <Line x1="14" y1="4" x2="14" y2="5.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+        <Line x1="7" y1="7" x2="8" y2="8" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+        <Line x1="21" y1="7" x2="20" y2="8" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      </Svg>
+    );
+
+    default: return <IconPen color={color} size={size} />;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +358,7 @@ type InsightData = {
     valence: number;
   }[];
   moodTrend: { week: string; avg: number | null }[];
-  smartInsights: string[];
+  smartInsights: { iconType: string; text: string }[];
   milestones: Milestone[];
   topTags: { tag: string; count: number }[];
 };
@@ -287,9 +590,9 @@ function computeInsights(allNotes: Note[]): InsightData {
     .map(([tag, count]) => ({ tag, count }));
 
   // Smart insights
-  const smartInsights: string[] = [];
+  const smartInsights: { iconType: string; text: string }[] = [];
   if (bestDayOfWeek)
-    smartInsights.push(`📅 You write most on ${bestDayOfWeek}s`);
+    smartInsights.push({ iconType: "calendar", text: `You write most on ${bestDayOfWeek}s` });
   if (mostActiveHour !== null) {
     const period =
       mostActiveHour < 12
@@ -297,32 +600,37 @@ function computeInsights(allNotes: Note[]): InsightData {
         : mostActiveHour < 18
           ? "afternoon"
           : "evening";
-    smartInsights.push(
-      `⏰ You're a ${period} journaler — usually at ${formatHour(mostActiveHour)}`,
-    );
+    smartInsights.push({
+      iconType: "clock",
+      text: `You're a ${period} journaler — usually at ${formatHour(mostActiveHour)}`,
+    });
   }
   if (thisMonthEntries > lastMonthEntries && lastMonthEntries > 0)
-    smartInsights.push(
-      `📈 ${thisMonthEntries - lastMonthEntries} more entries than last month — great momentum!`,
-    );
+    smartInsights.push({
+      iconType: "trendUp",
+      text: `${thisMonthEntries - lastMonthEntries} more entries than last month — great momentum!`,
+    });
   else if (thisMonthEntries < lastMonthEntries && lastMonthEntries > 0)
-    smartInsights.push(
-      `📉 ${lastMonthEntries - thisMonthEntries} fewer entries than last month — you got this!`,
-    );
+    smartInsights.push({
+      iconType: "trendDown",
+      text: `${lastMonthEntries - thisMonthEntries} fewer entries than last month — you got this!`,
+    });
   if (longestEntry > 0)
-    smartInsights.push(`✍️ Your longest entry was ${longestEntry} words`);
+    smartInsights.push({ iconType: "pen", text: `Your longest entry was ${longestEntry} words` });
   if (avgWordsPerEntry > 100)
-    smartInsights.push(
-      `💬 You write detailed entries — avg ${avgWordsPerEntry} words each`,
-    );
+    smartInsights.push({
+      iconType: "chat",
+      text: `You write detailed entries — avg ${avgWordsPerEntry} words each`,
+    });
   if (currentStreak >= 3)
-    smartInsights.push(`🔥 ${currentStreak}-day streak! Keep it going!`);
+    smartInsights.push({ iconType: "fire", text: `${currentStreak}-day streak! Keep it going!` });
   if (daysJournaled >= 100)
-    smartInsights.push(
-      `🏅 You've journaled ${daysJournaled} days total — incredible!`,
-    );
+    smartInsights.push({
+      iconType: "medal",
+      text: `You've journaled ${daysJournaled} days total — incredible!`,
+    });
   if (topTags.length > 0)
-    smartInsights.push(`🏷️ Your most used tag is #${topTags[0].tag}`);
+    smartInsights.push({ iconType: "tag", text: `Your most used tag is #${topTags[0].tag}` });
 
   // Milestones
   const milestones: Milestone[] = [
@@ -687,10 +995,8 @@ function MoodTrendChart({
           paddingVertical: 2,
         }}
       >
-        {["😄", "🙂", "😐", "😕", "😞"].map((e, i) => (
-          <Text key={i} style={{ fontSize: 10 }}>
-            {e}
-          </Text>
+        {MOOD_ICONS.map((IconFn, i) => (
+          <View key={i}>{IconFn(10)}</View>
         ))}
       </View>
       <View style={{ flex: 1 }}>
@@ -766,8 +1072,25 @@ function MoodTrendChart({
 
 // ─── Smart Insight Cards ──────────────────────────────────────────────────────
 
-function SmartInsightCards({ insights }: { insights: string[] }) {
+function SmartInsightCards({ insights }: { insights: { iconType: string; text: string }[] }) {
   if (insights.length === 0) return null;
+
+  const renderIcon = (iconType: string) => {
+    const size = 16;
+    switch (iconType) {
+      case "calendar": return <IconCalendar color={ACCENT} size={size} />;
+      case "clock": return <IconClock color={ACCENT} size={size} />;
+      case "trendUp": return <IconTrendUp size={size} />;
+      case "trendDown": return <IconTrendDown size={size} />;
+      case "pen": return <IconPen color={ACCENT} size={size} />;
+      case "chat": return <IconChat size={size} />;
+      case "fire": return <IconFire size={size} />;
+      case "medal": return <IconMedal size={size} />;
+      case "tag": return <IconTag size={size} />;
+      default: return <IconPen color={ACCENT} size={size} />;
+    }
+  };
+
   return (
     <View style={{ gap: 8, marginBottom: 12 }}>
       {insights.map((insight, i) => (
@@ -779,10 +1102,16 @@ function SmartInsightCards({ insights }: { insights: string[] }) {
             padding: 14,
             borderLeftWidth: 3,
             borderLeftColor: ACCENT,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
           }}
         >
-          <Text style={{ color: "#d1d5db", fontSize: 14, lineHeight: 20 }}>
-            {insight}
+          <View style={{ width: 20, alignItems: "center" }}>
+            {renderIcon(insight.iconType)}
+          </View>
+          <Text style={{ color: "#d1d5db", fontSize: 14, lineHeight: 20, flex: 1 }}>
+            {insight.text}
           </Text>
         </View>
       ))}
@@ -814,11 +1143,7 @@ function MilestoneBadge({
         },
       ]}
     >
-      <Text
-        style={{ fontSize: 28, marginBottom: 2, opacity: earned ? 1 : 0.25 }}
-      >
-        {m.emoji}
-      </Text>
+      <MilestoneIcon id={m.id} size={28} unlocked={earned} />
       <Text style={[mil.title, !earned && { color: "#444" }]}>{m.title}</Text>
       <Text style={[mil.desc, !earned && { color: "#2e2e2e" }]}>{m.desc}</Text>
     </View>
@@ -1093,7 +1418,9 @@ export default function InsightsScreen() {
           },
         ]}
       >
-        <Text style={{ fontSize: 40, marginBottom: 12 }}>📊</Text>
+        <View style={{ marginBottom: 12 }}>
+          <IconChartBar color={ACCENT} size={40} />
+        </View>
         <Text
           style={{
             color: "#fff",
@@ -1166,7 +1493,7 @@ export default function InsightsScreen() {
         <View style={{ gap: 12 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <View style={s.streakIconWrap}>
-              <Text style={{ fontSize: 16 }}>📅</Text>
+              <IconCalendar color="#c084fc" size={16} />
             </View>
             <View>
               <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" }}>
@@ -1182,7 +1509,7 @@ export default function InsightsScreen() {
           />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <View style={s.streakIconWrap}>
-              <Text style={{ fontSize: 16 }}>🗓️</Text>
+              <IconClock color="#c084fc" size={16} />
             </View>
             <View>
               <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" }}>
@@ -1411,18 +1738,18 @@ export default function InsightsScreen() {
       <SH title="Writing Patterns" />
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
         {[
-          { icon: "📅", value: data.bestDayOfWeek, label: "Best Day" },
+          { iconEl: <IconCalendar color={ACCENT} size={20} />, value: data.bestDayOfWeek, label: "Best Day" },
           ...(data.mostActiveHour !== null
             ? [
               {
-                icon: "⏰",
+                iconEl: <IconClock color={ACCENT} size={20} />,
                 value: formatHour(data.mostActiveHour),
                 label: "Peak Hour",
               },
             ]
             : []),
           {
-            icon: "✍️",
+            iconEl: <IconPen color={ACCENT} size={20} />,
             value: String(data.avgWordsPerEntry),
             label: "Avg Words",
           },
@@ -1438,7 +1765,9 @@ export default function InsightsScreen() {
               gap: 4,
             }}
           >
-            <Text style={{ fontSize: 20 }}>{c.icon}</Text>
+            <View style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center" }}>
+              {c.iconEl}
+            </View>
             <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>
               {c.value}
             </Text>

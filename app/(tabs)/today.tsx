@@ -14,8 +14,117 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Line, Path, Polygon, Rect } from "react-native-svg";
+import { JournalIcon } from "../../components/create-journal-modal";
 import { Storage, STORAGE_KEYS } from "../storage";
 import type { Journal } from "./index";
+
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+function IconList({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Line x1="5" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="5" y1="8" x2="14" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="5" y1="12" x2="14" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Circle cx="2.5" cy="4" r="1.2" fill={color} />
+      <Circle cx="2.5" cy="8" r="1.2" fill={color} />
+      <Circle cx="2.5" cy="12" r="1.2" fill={color} />
+    </Svg>
+  );
+}
+
+function IconGrid({ color = "#c084fc" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Rect x="1" y="1" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
+      <Rect x="9" y="1" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
+      <Rect x="1" y="9" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
+      <Rect x="9" y="9" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
+    </Svg>
+  );
+}
+
+function IconPlus({ color = "#fff" }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Line x1="8" y1="3" x2="8" y2="13" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="3" y1="8" x2="13" y2="8" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconPraying({ size = 32 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32">
+      <Line x1="16" y1="4" x2="16" y2="28" stroke="#444" strokeWidth="3" strokeLinecap="round" />
+      <Line x1="8" y1="11" x2="24" y2="11" stroke="#444" strokeWidth="3" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconWrite({ size = 32 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32">
+      <Path d="M7 25 L9 17 L22 6 L26 10 L14 23 Z" stroke="#444" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
+      <Line x1="19" y1="8" x2="24" y2="13" stroke="#444" strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="7" y1="25" x2="13" y2="25" stroke="#444" strokeWidth="1.6" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function IconWaveEmoji({ size = 20 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20">
+      <Path d="M7 17 Q8 11 10 9 Q12 8 13 10 L14.5 13 Q15.5 15 14 15.5 Q12.5 16 11.5 14 L11 13 Q10.5 11.5 11.5 11 Q12 10.5 12.5 11 L14.5 15" stroke="#fbbf24" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function IconFire({ size = 16 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M8 1.5c0 3-3 3.5-3 6.5a4 4 0 008 0c0-4-3-4-2.5-7C9.5 1 7 4 6.5 6.5 6 4.5 5 3.5 5 3.5c0 3 1.5 3.5 1.5 5.5a2 2 0 004 0c0-3-1.5-3.5-1.5-7.5z" stroke="#f97316" strokeWidth="1" fill="none" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// Section label decorators — small recognizable shapes per section
+function SectionDotVerse() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 10 10">
+      <Polygon points="5,0.5 6.5,3.5 10,4 7.5,6.5 8,10 5,8.5 2,10 2.5,6.5 0,4 3.5,3.5" stroke="#444" strokeWidth="1" fill="none" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function SectionDotPrayer() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 10 10">
+      <Path d="M4.5 2.5 Q3.5 3.5 3.5 5.5 L3.5 7.5 Q3.5 8.5 4.5 8.5 L5.5 8.5 Q6.5 8.5 6.5 7.5 L6.5 5.5 Q6.5 3.5 5.5 2.5 Q5 2 4.5 2.5z" stroke="#444" strokeWidth="1" fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function SectionDotEntries() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 10 10">
+      <Rect x="1" y="1.5" width="8" height="7" rx="1.5" stroke="#444" strokeWidth="1" fill="none" />
+      <Line x1="3" y1="1" x2="3" y2="2.5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
+      <Line x1="7" y1="1" x2="7" y2="2.5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
+      <Line x1="1" y1="4" x2="9" y2="4" stroke="#444" strokeWidth="0.9" />
+    </Svg>
+  );
+}
+
+function SectionDotQuickWrite() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 10 10">
+      <Path d="M2 9 L3 6 L8 2 L9 3 L4 7.5 Z" stroke="#444" strokeWidth="1" fill="none" strokeLinejoin="round" />
+      <Line x1="6.5" y1="3" x2="8.5" y2="5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
+    </Svg>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -293,14 +402,17 @@ export default function TodayScreen() {
 
       <View style={styles.greetingRow}>
         <View>
-          <Text style={styles.greetingText}>
-            {getGreeting()}{displayName ? `, ${displayName}` : ""} 👋
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+            <Text style={styles.greetingText}>
+              {getGreeting()}{displayName ? `, ${displayName}` : ""}
+            </Text>
+            <IconWaveEmoji size={20} />
+          </View>
           <Text style={styles.dateText}>{formatDate(new Date())}</Text>
         </View>
         {streak > 0 && (
           <View style={styles.streakBadge}>
-            <Text style={styles.streakFire}>🔥</Text>
+            <IconFire size={16} />
             <Text style={styles.streakCount}>{streak}</Text>
           </View>
         )}
@@ -308,7 +420,8 @@ export default function TodayScreen() {
 
       {/* ── Daily Verse ── */}
       <View style={styles.sectionLabel}>
-        <Text style={styles.sectionLabelText}>✦ VERSE OF THE DAY</Text>
+        <SectionDotVerse />
+        <Text style={styles.sectionLabelText}>VERSE OF THE DAY</Text>
       </View>
       <View style={styles.verseCard}>
         {verseLoading ? (
@@ -332,7 +445,8 @@ export default function TodayScreen() {
       {/* ── Prayer Section ── */}
       <View style={[styles.sectionLabel, { marginTop: 8 }]}>
         {/* Left: label + count */}
-        <Text style={styles.sectionLabelText}>✦ MY PRAYERS</Text>
+        <SectionDotPrayer />
+        <Text style={styles.sectionLabelText}>MY PRAYERS</Text>
         {pendingPrayers.length > 0 && (
           <Text style={styles.sectionCount}>{pendingPrayers.length}</Text>
         )}
@@ -345,17 +459,13 @@ export default function TodayScreen() {
               onPress={() => toggleView("list")}
               style={[styles.viewToggleBtn, prayerView === "list" && styles.viewToggleBtnActive]}
             >
-              <Text style={[styles.viewToggleIcon, prayerView === "list" && styles.viewToggleIconActive]}>
-                ☰
-              </Text>
+              <IconList color={prayerView === "list" ? "#c084fc" : "#444"} />
             </Pressable>
             <Pressable
               onPress={() => toggleView("carousel")}
               style={[styles.viewToggleBtn, prayerView === "carousel" && styles.viewToggleBtnActive]}
             >
-              <Text style={[styles.viewToggleIcon, prayerView === "carousel" && styles.viewToggleIconActive]}>
-                ⊞
-              </Text>
+              <IconGrid color={prayerView === "carousel" ? "#c084fc" : "#444"} />
             </Pressable>
           </View>
 
@@ -364,7 +474,7 @@ export default function TodayScreen() {
             onPress={openAddForm}
             style={({ pressed }) => [styles.prayerAddBtn, pressed && { opacity: 0.7 }]}
           >
-            <Text style={styles.prayerAddText}>＋</Text>
+            <IconPlus color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -372,9 +482,9 @@ export default function TodayScreen() {
       {/* Empty prayer state */}
       {pendingPrayers.length === 0 && (
         <Pressable onPress={openAddForm} style={styles.prayerEmpty}>
-          <Text style={styles.prayerEmptyIcon}>🙏</Text>
+          <View style={{ marginBottom: 10 }}><IconPraying size={36} /></View>
           <Text style={styles.prayerEmptyText}>No active prayers</Text>
-          <Text style={styles.prayerEmptySub}>Tap ＋ to add your first prayer</Text>
+          <Text style={styles.prayerEmptySub}>Tap + to add your first prayer</Text>
         </Pressable>
       )}
 
@@ -513,13 +623,14 @@ export default function TodayScreen() {
 
       {/* ── Today's Entries ── */}
       <View style={[styles.sectionLabel, { marginTop: 28 }]}>
-        <Text style={styles.sectionLabelText}>✦ TODAY'S ENTRIES</Text>
+        <SectionDotEntries />
+        <Text style={styles.sectionLabelText}>TODAY'S ENTRIES</Text>
         <Text style={styles.sectionCount}>{todayNotes.length}</Text>
       </View>
 
       {todayNotes.length === 0 ? (
         <View style={styles.emptyToday}>
-          <Text style={styles.emptyTodayIcon}>✍️</Text>
+          <View style={{ marginBottom: 8 }}><IconWrite size={32} /></View>
           <Text style={styles.emptyTodayText}>Nothing written yet today</Text>
           <Text style={styles.emptyTodaySubtext}>Reflect on the verse above and write your thoughts</Text>
         </View>
@@ -532,7 +643,10 @@ export default function TodayScreen() {
           >
             <View style={[styles.noteAccent, { backgroundColor: journal.color }]} />
             <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 12 }}>
-              <Text style={styles.todayNoteJournal}>{journal.emoji} {journal.name}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                <JournalIcon iconId={journal.iconId ?? "journals"} color={journal.color} size={12} />
+                <Text style={styles.todayNoteJournal}>{journal.name}</Text>
+              </View>
               <Text style={styles.todayNoteTitle} numberOfLines={1}>{note.title || "Untitled"}</Text>
               <Text style={styles.todayNotePreview} numberOfLines={2}>{note.text}</Text>
             </View>
@@ -542,7 +656,8 @@ export default function TodayScreen() {
 
       {/* ── Quick Write ── */}
       <View style={[styles.sectionLabel, { marginTop: 28 }]}>
-        <Text style={styles.sectionLabelText}>✦ QUICK WRITE</Text>
+        <SectionDotQuickWrite />
+        <Text style={styles.sectionLabelText}>QUICK WRITE</Text>
       </View>
 
       {journals.length === 0 ? (
@@ -558,10 +673,10 @@ export default function TodayScreen() {
               onPress={() => goToNoteForm(j.id, j.color)}
             >
               <View style={[styles.quickJournalIcon, { backgroundColor: j.color + "22" }]}>
-                <Text style={{ fontSize: 20 }}>{j.emoji}</Text>
+                <JournalIcon iconId={j.iconId ?? "journals"} color={j.color} size={24} />
               </View>
               <Text style={styles.quickJournalName} numberOfLines={1}>{j.name}</Text>
-              <Text style={[styles.quickJournalPlus, { color: j.color }]}>＋</Text>
+              <View style={{ marginTop: 2 }}><IconPlus color={j.color} /></View>
             </Pressable>
           ))}
         </ScrollView>
