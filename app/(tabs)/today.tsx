@@ -15,220 +15,27 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Line, Path, Polygon, Rect } from "react-native-svg";
 import { JournalIcon } from "../../components/create-journal-modal";
 import { Storage, STORAGE_KEYS } from "../storage";
 import type { Journal } from "./index";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 
-function IconList({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Line x1="5" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="5" y1="8" x2="14" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="5" y1="12" x2="14" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Circle cx="2.5" cy="4" r="1.2" fill={color} />
-      <Circle cx="2.5" cy="8" r="1.2" fill={color} />
-      <Circle cx="2.5" cy="12" r="1.2" fill={color} />
-    </Svg>
-  );
-}
-
-function IconGrid({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Rect x="1" y="1" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
-      <Rect x="9" y="1" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
-      <Rect x="1" y="9" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
-      <Rect x="9" y="9" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" fill="none" />
-    </Svg>
-  );
-}
-
-function IconPlus({ color = "#fff" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Line x1="8" y1="3" x2="8" y2="13" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <Line x1="3" y1="8" x2="13" y2="8" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconPraying({ size = 32, color = "#444" }: { size?: number; color?: string }) {
-  // Bootstrap: hand-index-thumb — folded hands / pray gesture
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path
-        d="M6.75 1a.75.75 0 0 1 .75.75V8a.5.5 0 0 0 1 0V5.467l.086-.004c.317-.012.637.008.816.1.134.068.319.224.422.41.038.073.6.336.86 1.579C11.61 7.97 11.822 9.39 12 10c.34 1.28.56 2.5.436 3.367C12.296 14.605 11.36 15 10 15H8.077a.75.75 0 0 1-.545-.232L5.7 12.817l.002-.002.002-.003a.5.5 0 0 0-.706-.707l-.002.002L3.25 13.857A.75.75 0 0 1 2 13.27V11a.75.75 0 0 1 .22-.53l2.53-2.53A.5.5 0 0 0 5 7.5V1.75A.75.75 0 0 1 5.75 1zm1.5 0a.75.75 0 0 1 .75.75v4.5a.5.5 0 0 0 1 0v-4.5a.75.75 0 0 1 1.5 0V8.5a.5.5 0 0 0 1 0V4.75a.75.75 0 0 1 1.5 0V11a.75.75 0 0 1-.22.53l-2.53 2.53A.5.5 0 0 0 11 14.5v.25a.75.75 0 0 1-1.5 0V14a.5.5 0 0 0-.5-.5H8.5a.5.5 0 0 0-.5.5v.75a.75.75 0 0 1-1.5 0V1.75A.75.75 0 0 1 8.25 1z"
-        fill={color}
-        opacity={0.8}
-      />
-    </Svg>
-  );
-}
-
 // Bootstrap check-circle-fill
-function IconCheckCircleFill({ color = "#4ade80", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" fill={color} />
-    </Svg>
-  );
-}
-
 // Bootstrap archive
-function IconArchiveFill({ color = "#888", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M12.643 15C13.979 15 15 13.845 15 12.5V7H1v5.5C1 13.845 2.021 15 3.357 15zM15 3h-1v-1a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1 0-1" fill={color} />
-    </Svg>
-  );
-}
-
 // Bootstrap chevron-right
-function IconChevronRight({ color = "#333", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708" fill={color} />
-    </Svg>
-  );
-}
-
 // Bootstrap send (arrow-right-circle-fill) for update send button
-function IconSend({ color = "#fff", size = 18 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M0 8a8 8 0 1 0 16 0A8 8 0 0 0 0 8m4.5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5a.5.5 0 0 1 0-1" fill={color} />
-    </Svg>
-  );
-}
-
 // Helper to render status icon from emoji key
 function renderStatusIcon(emoji: string, color: string, size = 14): React.ReactNode {
-  if (emoji === "pray") return <IconPraying color={color} size={size} />;
-  if (emoji === "check") return <IconCheckCircleFill color={color} size={size} />;
-  if (emoji === "archive") return <IconArchiveFill color={color} size={size} />;
+  if (emoji === "pray") return <FontAwesome6 name="hands-praying" size={size} color={color} />;
+  if (emoji === "check") return <FontAwesome6 name="circle-check" size={size} color={color} />;
+  if (emoji === "archive") return <FontAwesome6 name="box-archive" size={size} color={color} />;
   return null;
 }
 
 // ─── Aliased / Extra Bootstrap Icons ─────────────────────────────────────────
 
-/** Alias: same as IconPraying */
-function IconPray({ color = "#c084fc", size = 22 }: { color?: string; size?: number }) {
-  return <IconPraying color={color} size={size} />;
-}
-
-/** Alias: same as IconCheckCircleFill */
-function IconCheckCircle({ color = "#4ade80", size = 16 }: { color?: string; size?: number }) {
-  return <IconCheckCircleFill color={color} size={size} />;
-}
-
-/** Alias: same as IconArchiveFill */
-function IconArchive({ color = "#555", size = 16 }: { color?: string; size?: number }) {
-  return <IconArchiveFill color={color} size={size} />;
-}
-
-/** Bootstrap: lock-fill */
-function IconLock({ color = "#555", size = 12 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" fill={color} />
-    </Svg>
-  );
-}
-
-/** Bootstrap: x-lg */
-function IconClose({ color = "#555", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" fill={color} />
-    </Svg>
-  );
-}
-
-/** Bootstrap: pencil-square */
-function IconEdit({ color = "#e0e0e0", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" fill={color} />
-      <Path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" fill={color} />
-    </Svg>
-  );
-}
-
-/** Bootstrap: trash3 */
-function IconTrash({ color = "#f87171", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" fill={color} />
-    </Svg>
-  );
-}
-
-function IconWrite({ size = 32 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
-      <Path d="M7 25 L9 17 L22 6 L26 10 L14 23 Z" stroke="#444" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
-      <Line x1="19" y1="8" x2="24" y2="13" stroke="#444" strokeWidth="1.6" strokeLinecap="round" />
-      <Line x1="7" y1="25" x2="13" y2="25" stroke="#444" strokeWidth="1.6" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconWaveEmoji({ size = 20 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 20 20">
-      <Path d="M7 17 Q8 11 10 9 Q12 8 13 10 L14.5 13 Q15.5 15 14 15.5 Q12.5 16 11.5 14 L11 13 Q10.5 11.5 11.5 11 Q12 10.5 12.5 11 L14.5 15" stroke="#fbbf24" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function IconFire({ size = 16 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 16 16">
-      <Path d="M8 1.5c0 3-3 3.5-3 6.5a4 4 0 008 0c0-4-3-4-2.5-7C9.5 1 7 4 6.5 6.5 6 4.5 5 3.5 5 3.5c0 3 1.5 3.5 1.5 5.5a2 2 0 004 0c0-3-1.5-3.5-1.5-7.5z" stroke="#f97316" strokeWidth="1" fill="none" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
 // Section label decorators — small recognizable shapes per section
-function SectionDotVerse() {
-  return (
-    <Svg width={10} height={10} viewBox="0 0 10 10">
-      <Polygon points="5,0.5 6.5,3.5 10,4 7.5,6.5 8,10 5,8.5 2,10 2.5,6.5 0,4 3.5,3.5" stroke="#444" strokeWidth="1" fill="none" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function SectionDotPrayer() {
-  return (
-    <Svg width={10} height={10} viewBox="0 0 10 10">
-      <Path d="M4.5 2.5 Q3.5 3.5 3.5 5.5 L3.5 7.5 Q3.5 8.5 4.5 8.5 L5.5 8.5 Q6.5 8.5 6.5 7.5 L6.5 5.5 Q6.5 3.5 5.5 2.5 Q5 2 4.5 2.5z" stroke="#444" strokeWidth="1" fill="none" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function SectionDotEntries() {
-  return (
-    <Svg width={10} height={10} viewBox="0 0 10 10">
-      <Rect x="1" y="1.5" width="8" height="7" rx="1.5" stroke="#444" strokeWidth="1" fill="none" />
-      <Line x1="3" y1="1" x2="3" y2="2.5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
-      <Line x1="7" y1="1" x2="7" y2="2.5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
-      <Line x1="1" y1="4" x2="9" y2="4" stroke="#444" strokeWidth="0.9" />
-    </Svg>
-  );
-}
-
-function SectionDotQuickWrite() {
-  return (
-    <Svg width={10} height={10} viewBox="0 0 10 10">
-      <Path d="M2 9 L3 6 L8 2 L9 3 L4 7.5 Z" stroke="#444" strokeWidth="1" fill="none" strokeLinejoin="round" />
-      <Line x1="6.5" y1="3" x2="8.5" y2="5" stroke="#444" strokeWidth="1" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type DailyVerse = {
@@ -527,13 +334,13 @@ export default function TodayScreen() {
             <Text style={styles.greetingText}>
               {getGreeting()}{displayName ? `, ${displayName}` : ""}
             </Text>
-            <IconWaveEmoji size={20} />
+            <FontAwesome6 name="hand" size={18} color="#fbbf24" />
           </View>
           <Text style={styles.dateText}>{formatDate(new Date())}</Text>
         </View>
         {streak > 0 && (
           <View style={styles.streakBadge}>
-            <IconFire size={16} />
+            <FontAwesome6 name="fire" size={14} color="#f97316" />
             <Text style={styles.streakCount}>{streak}</Text>
           </View>
         )}
@@ -541,7 +348,7 @@ export default function TodayScreen() {
 
       {/* ── Daily Verse ── */}
       <View style={styles.sectionLabel}>
-        <SectionDotVerse />
+        <FontAwesome6 name="star" size={9} color="#444" />
         <Text style={styles.sectionLabelText}>VERSE OF THE DAY</Text>
       </View>
       <View style={styles.verseCard}>
@@ -566,7 +373,7 @@ export default function TodayScreen() {
       {/* ── Prayer Section ── */}
       <View style={[styles.sectionLabel, { marginTop: 8 }]}>
         {/* Left: label + count */}
-        <SectionDotPrayer />
+        <FontAwesome6 name="hands-praying" size={9} color="#444" />
         <Text style={styles.sectionLabelText}>MY PRAYERS</Text>
         {pendingPrayers.length > 0 && (
           <Text style={styles.sectionCount}>{pendingPrayers.length}</Text>
@@ -580,13 +387,13 @@ export default function TodayScreen() {
               onPress={() => toggleView("list")}
               style={[styles.viewToggleBtn, prayerView === "list" && styles.viewToggleBtnActive]}
             >
-              <IconList color={prayerView === "list" ? "#c084fc" : "#444"} />
+              <FontAwesome6 name="list-ul" size={15} color={prayerView === "list" ? "#c084fc" : "#444"} />
             </Pressable>
             <Pressable
               onPress={() => toggleView("carousel")}
               style={[styles.viewToggleBtn, prayerView === "carousel" && styles.viewToggleBtnActive]}
             >
-              <IconGrid color={prayerView === "carousel" ? "#c084fc" : "#444"} />
+              <FontAwesome6 name="grip" size={15} color={prayerView === "carousel" ? "#c084fc" : "#444"} />
             </Pressable>
           </View>
 
@@ -595,7 +402,7 @@ export default function TodayScreen() {
             onPress={openAddForm}
             style={({ pressed }) => [styles.prayerAddBtn, pressed && { opacity: 0.7 }]}
           >
-            <IconPlus color="#fff" />
+            <FontAwesome6 name="plus" size={16} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -645,7 +452,7 @@ export default function TodayScreen() {
                       <Text style={styles.updateBadgeText}>{prayer.updates.length}</Text>
                     </View>
                   )}
-                  <IconChevronRight color="#333" size={16} />
+                  <FontAwesome6 name="chevron-right" size={12} color="#333" />
                 </View>
               </Pressable>
             );
@@ -744,14 +551,14 @@ export default function TodayScreen() {
 
       {/* ── Today's Entries ── */}
       <View style={[styles.sectionLabel, { marginTop: 28 }]}>
-        <SectionDotEntries />
+        <FontAwesome6 name="calendar-day" size={9} color="#444" />
         <Text style={styles.sectionLabelText}>TODAY'S ENTRIES</Text>
         <Text style={styles.sectionCount}>{todayNotes.length}</Text>
       </View>
 
       {todayNotes.length === 0 ? (
         <View style={styles.emptyToday}>
-          <View style={{ marginBottom: 8 }}><IconWrite size={32} /></View>
+          <FontAwesome6 name="pen-to-square" size={28} color="#333" style={{ marginBottom: 8 }} />
           <Text style={styles.emptyTodayText}>Nothing written yet today</Text>
           <Text style={styles.emptyTodaySubtext}>Reflect on the verse above and write your thoughts</Text>
         </View>
@@ -777,7 +584,7 @@ export default function TodayScreen() {
 
       {/* ── Quick Write ── */}
       <View style={[styles.sectionLabel, { marginTop: 28 }]}>
-        <SectionDotQuickWrite />
+        <FontAwesome6 name="pen" size={9} color="#444" />
         <Text style={styles.sectionLabelText}>QUICK WRITE</Text>
       </View>
 
@@ -797,7 +604,7 @@ export default function TodayScreen() {
                 <JournalIcon iconId={j.iconId ?? "journals"} color={j.color} size={24} />
               </View>
               <Text style={styles.quickJournalName} numberOfLines={1}>{j.name}</Text>
-              <View style={{ marginTop: 2 }}><IconPlus color={j.color} /></View>
+              <FontAwesome6 name="plus" size={14} color={j.color} />
             </Pressable>
           ))}
         </ScrollView>
@@ -953,7 +760,7 @@ export default function TodayScreen() {
                     onPress={() => markAnswered(selectedPrayer)}
                     style={({ pressed }) => [styles.answeredBtn, pressed && { opacity: 0.75 }]}
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><IconCheckCircleFill color="#4ade80" size={16} /><Text style={styles.answeredBtnText}>Mark as Answered</Text></View>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><FontAwesome6 name="circle-check" size={16} color="#4ade80" /><Text style={styles.answeredBtnText}>Mark as Answered</Text></View>
                   </Pressable>
                 )}
 
@@ -971,7 +778,7 @@ export default function TodayScreen() {
                       multiline
                     />
                     <Pressable onPress={addUpdate} style={({ pressed }) => [styles.updateSendBtn, pressed && { opacity: 0.7 }]}>
-                      <IconSend color="#fff" size={20} />
+                      <FontAwesome6 name="paper-plane" size={16} color="#fff" />
                     </Pressable>
                   </View>
                   {selectedPrayer.updates.length === 0 && (
