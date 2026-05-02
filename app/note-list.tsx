@@ -1,3 +1,4 @@
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -9,7 +10,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Storage, STORAGE_KEYS } from "./storage";
 
 type Note = {
@@ -31,7 +31,8 @@ export default function NoteList() {
 
   const journalId = asString(params.journalId);
   const journalName = asString(params.journalName, "Journal");
-  const journalColor = asString(params.journalColor, "#c084fc");
+  const rawColor = asString(params.journalColor, "#c084fc");
+  const journalColor = rawColor.startsWith("#") ? rawColor : "#c084fc";
 
   const storageKey = STORAGE_KEYS.notes(journalId);
 
