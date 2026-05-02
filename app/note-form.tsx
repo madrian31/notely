@@ -1,3 +1,4 @@
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
@@ -17,79 +18,52 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Storage, STORAGE_KEYS } from "./storage";
 
-// ─── UI Icons (non-toolbar) ───────────────────────────────────────────────────
+// ─── Bootstrap Activity Icons ─────────────────────────────────────────────────
+function ActivityIcon({ id, color = "#888", size = 18 }: { id: string; color?: string; size?: number }) {
+  const iconMap: Record<string, string> = {
+    stationary: "chair",
+    eating: "utensils",
+    walking: "person-walking",
+    running: "person-running",
+    biking: "bicycle",
+    automotive: "car",
+    flying: "plane",
+    none: "circle-minus",
+  };
+  const iconName = iconMap[id] ?? "circle-question";
+  return <FontAwesome6 name={iconName} size={size} color={color} />;
+}
 
 function IconChevronLeft({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 20 20">
-      <Path d="M13 4 L7 10 L13 16" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
+  return <FontAwesome6 name="chevron-left" size={18} color={color} />;
 }
 
 function IconShare({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Path d="M10 2 L14 6 L10 10" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M14 6 H6 a4 4 0 0 0 -4 4 v2" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="share-from-square" size={14} color={color} />;
 }
 
 function IconDownload({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Line x1="8" y1="2" x2="8" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M4 8 L8 12 L12 8" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Line x1="2" y1="14" x2="14" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="download" size={14} color={color} />;
 }
 
 function IconBible({ color = "#7c5fc4" }: { color?: string }) {
-  return (
-    <Svg width={13} height={13} viewBox="0 0 13 13">
-      <Rect x="1" y="1" width="11" height="11" rx="1.5" stroke={color} strokeWidth="1.2" fill="none" />
-      <Line x1="6.5" y1="3" x2="6.5" y2="10" stroke={color} strokeWidth="1" strokeLinecap="round" />
-      <Line x1="3" y1="6.5" x2="10" y2="6.5" stroke={color} strokeWidth="1" strokeLinecap="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="book-bible" size={11} color={color} />;
 }
 
 function IconX({ color = "#555" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Line x1="4" y1="4" x2="14" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="14" y1="4" x2="4" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="xmark" size={16} color={color} />;
 }
 
 function IconCheck({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Path d="M3 8 L6.5 12 L13 4" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="check" size={14} color={color} />;
 }
 
 function IconInfo({ color = "#666" }: { color?: string }) {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 16 16">
-      <Circle cx="8" cy="8" r="6.5" stroke={color} strokeWidth="1.3" fill="none" />
-      <Line x1="8" y1="7" x2="8" y2="11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Circle cx="8" cy="5" r="0.8" fill={color} />
-    </Svg>
-  );
+  return <FontAwesome6 name="circle-info" size={14} color={color} />;
 }
 
 function IconArrowUp({ color = "#444" }: { color?: string }) {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Line x1="7" y1="12" x2="7" y2="2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M3 6 L7 2 L11 6" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
+  return <FontAwesome6 name="arrow-up" size={12} color={color} />;
 }
 
 // ─── Toolbar Icons (inlined) ──────────────────────────────────────────────────
@@ -263,39 +237,39 @@ const EMOTIONS: EmotionDef[] = [
 const INTENSITY_LABELS = ["Slightly", "Moderately", "Strongly"] as const;
 
 const ACTIVITIES = [
-  { id: "stationary", label: "Stationary", emoji: "🪑" },
-  { id: "eating", label: "Eating", emoji: "🍽️" },
-  { id: "walking", label: "Walking", emoji: "🚶" },
-  { id: "running", label: "Running", emoji: "🏃" },
-  { id: "biking", label: "Biking", emoji: "🚴" },
-  { id: "automotive", label: "Automotive", emoji: "🚗" },
-  { id: "flying", label: "Flying", emoji: "✈️" },
-  { id: "none", label: "None", emoji: "—" },
+  { id: "stationary", label: "Stationary", icon: "stationary" },
+  { id: "eating", label: "Eating", icon: "eating" },
+  { id: "walking", label: "Walking", icon: "walking" },
+  { id: "running", label: "Running", icon: "running" },
+  { id: "biking", label: "Biking", icon: "biking" },
+  { id: "automotive", label: "Automotive", icon: "automotive" },
+  { id: "flying", label: "Flying", icon: "flying" },
+  { id: "none", label: "None", icon: "none" },
 ];
 
 // ─── Devotion Card Themes ─────────────────────────────────────────────────────
 
 const CARD_THEMES = [
   {
-    id: "midnight", label: "Midnight", emoji: "🌙",
+    id: "midnight", label: "Midnight", emoji: "moon",
     bg: "#0d0d1a", accent: "#7c5fc4", accentLight: "#c084fc",
     verseColor: "#b8aaee", titleColor: "#f0f0f0", textColor: "#aaa",
     borderColor: "#1e1e35", decorColor: "#1a1a2e",
   },
   {
-    id: "dawn", label: "Dawn", emoji: "🌅",
+    id: "dawn", label: "Dawn", emoji: "sun-horizon",
     bg: "#1a0e06", accent: "#c2752a", accentLight: "#f59e0b",
     verseColor: "#fcd9a0", titleColor: "#fff5e6", textColor: "#c8a87a",
     borderColor: "#2e1e0a", decorColor: "#231509",
   },
   {
-    id: "forest", label: "Forest", emoji: "🌿",
+    id: "forest", label: "Forest", emoji: "seedling",
     bg: "#071410", accent: "#2d7a5a", accentLight: "#4ade80",
     verseColor: "#a7f3d0", titleColor: "#ecfdf5", textColor: "#86efac",
     borderColor: "#0f2d20", decorColor: "#0a1f16",
   },
   {
-    id: "ocean", label: "Ocean", emoji: "🌊",
+    id: "ocean", label: "Ocean", emoji: "water",
     bg: "#060e1a", accent: "#1d5fa8", accentLight: "#60a5fa",
     verseColor: "#bfdbfe", titleColor: "#eff6ff", textColor: "#93c5fd",
     borderColor: "#0c2040", decorColor: "#08162e",
@@ -306,25 +280,25 @@ const CARD_THEMES = [
 
 const NOTE_THEMES = [
   {
-    id: "dark", label: "Dark", emoji: "🖤",
+    id: "dark", label: "Dark", emoji: "circle-half-stroke",
     bg: "#0d0d0d", accent: "",
     titleColor: "#f0f0f0", textColor: "#999",
     borderColor: "#1e1e1e", tagBg: "#1a1a1a", footerColor: "#333",
   },
   {
-    id: "slate", label: "Slate", emoji: "🌫️",
+    id: "slate", label: "Slate", emoji: "cloud",
     bg: "#0f1117", accent: "",
     titleColor: "#e8eaf0", textColor: "#8a8fa8",
     borderColor: "#1c1f2e", tagBg: "#171a26", footerColor: "#2a2d3a",
   },
   {
-    id: "warm", label: "Warm", emoji: "🕯️",
+    id: "warm", label: "Warm", emoji: "fire-flame-curved",
     bg: "#110e09", accent: "",
     titleColor: "#f5ede0", textColor: "#9a8870",
     borderColor: "#2a2010", tagBg: "#1a1508", footerColor: "#2a1f0f",
   },
   {
-    id: "cool", label: "Cool", emoji: "❄️",
+    id: "cool", label: "Cool", emoji: "snowflake",
     bg: "#08101a", accent: "",
     titleColor: "#e0eeff", textColor: "#6a8aaa",
     borderColor: "#0f1e30", tagBg: "#0a1520", footerColor: "#0f1e30",
@@ -871,7 +845,7 @@ function ShareDevotionModal({ visible, onClose, title, verseRef, verseText, segm
               {CARD_THEMES.map((t, idx) => (
                 <TouchableOpacity key={t.id} onPress={() => setSelectedTheme(idx)}
                   style={[sm.themeBtn, { backgroundColor: t.bg, borderColor: t.borderColor }, selectedTheme === idx && { borderColor: t.accent, borderWidth: 2 }]}>
-                  <Text style={sm.themeEmoji}>{t.emoji}</Text>
+                  <FontAwesome6 name={t.emoji} size={18} color={t.accentLight} style={{ marginBottom: 4 }} />
                   <Text style={[sm.themeLabel, { color: t.accentLight }]}>{t.label}</Text>
                   {selectedTheme === idx && (
                     <View style={[sm.themeCheck, { backgroundColor: t.accent }]}>
@@ -971,7 +945,7 @@ function ShareNoteModal({ visible, onClose, title, segments, date, emotion, tags
               {NOTE_THEMES.map((t, idx) => (
                 <TouchableOpacity key={t.id} onPress={() => setSelectedTheme(idx)}
                   style={[sm.themeBtn, { backgroundColor: t.bg, borderColor: t.borderColor }, selectedTheme === idx && { borderColor: journalColor, borderWidth: 2 }]}>
-                  <Text style={sm.themeEmoji}>{t.emoji}</Text>
+                  <FontAwesome6 name={t.emoji} size={18} color={journalColor} style={{ marginBottom: 4 }} />
                   <Text style={[sm.themeLabel, { color: journalColor }]}>{t.label}</Text>
                   {selectedTheme === idx && (
                     <View style={[sm.themeCheck, { backgroundColor: journalColor }]}>
@@ -1022,7 +996,7 @@ const sm = StyleSheet.create({
   sectionLabel: { color: "#444", fontSize: 11, fontWeight: "700", letterSpacing: 1, marginHorizontal: 20, marginTop: 20, marginBottom: 12 },
   themeRow: { flexDirection: "row", paddingHorizontal: 16, gap: 10 },
   themeBtn: { flex: 1, alignItems: "center", borderRadius: 14, borderWidth: 1, paddingVertical: 14, paddingHorizontal: 4, gap: 5, position: "relative" },
-  themeEmoji: { fontSize: 20 },
+  themeColorDot: { width: 20, height: 20, borderRadius: 10, marginBottom: 4, borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" },
   themeLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
   themeCheck: { position: "absolute", top: 6, right: 6, width: 16, height: 16, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   statusBox: { marginHorizontal: 20, marginTop: 18, backgroundColor: "#1a1a1a", borderRadius: 12, padding: 12, alignItems: "center" },
@@ -1517,7 +1491,7 @@ export default function NoteForm() {
                   return (
                     <TouchableOpacity key={act.id} onPress={() => toggleActivity(act.id)}
                       style={[s.activityBtn, active && { backgroundColor: journalColor + "33", borderColor: journalColor }]}>
-                      <Text style={s.activityEmoji}>{act.emoji}</Text>
+                      <ActivityIcon id={act.id} color={active ? journalColor : "#555"} size={18} />
                       <Text style={[s.activityLabel, active && { color: journalColor }]}>{act.label}</Text>
                     </TouchableOpacity>
                   );
@@ -1672,7 +1646,7 @@ const s = StyleSheet.create({
   clearEmotionText: { color: "#555", fontSize: 13 },
   activityGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 14, gap: 8 },
   activityBtn: { width: "22%", alignItems: "center", borderRadius: 12, borderWidth: 1.5, borderColor: "#2a2a2a", paddingVertical: 10, gap: 4 },
-  activityEmoji: { fontSize: 22 },
+  activityEmojiUnused: { fontSize: 22 },
   activityLabel: { fontSize: 10, color: "#555", fontWeight: "600" },
   tagInputRow: { flexDirection: "row", alignItems: "center", marginHorizontal: 18, gap: 8 },
   tagTextInput: { flex: 1, backgroundColor: "#1e1e1e", color: "#f0f0f0", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14 },

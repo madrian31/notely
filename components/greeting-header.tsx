@@ -8,138 +8,17 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Svg, { Circle, Line, Path, Polygon } from "react-native-svg";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Storage, STORAGE_KEYS } from "../app/storage";
-
-// ─── Time Icons ───────────────────────────────────────────────────────────────
-
-// ☀️ Sun — round disc + 8 short rays, unmistakably a sun
-function IconSun({ color = "#f59e0b" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      {/* filled disc so it reads as solid sun, not just an outline */}
-      <Circle cx="9" cy="9" r="3.2" stroke={color} strokeWidth="1.4" fill={color} opacity={1} />
-      {/* cardinal rays */}
-      <Line x1="9" y1="1.5" x2="9" y2="3.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="9" y1="14.5" x2="9" y2="16.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="1.5" y1="9" x2="3.5" y2="9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="14.5" y1="9" x2="16.5" y2="9" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      {/* diagonal rays */}
-      <Line x1="3.6" y1="3.6" x2="5" y2="5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="13" y1="13" x2="14.4" y2="14.4" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="14.4" y1="3.6" x2="13" y2="5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="5" y1="13" x2="3.6" y2="14.4" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-// 🌤 Sun + cloud — "afternoon" is bright but getting cloudy
-function IconSunCloud({ color = "#f59e0b" }: { color?: string }) {
-  return (
-    <Svg width={20} height={18} viewBox="0 0 20 18">
-      {/* small sun peeking top-left */}
-      <Circle cx="6" cy="6" r="2.5" fill={color} />
-      <Line x1="6" y1="1.5" x2="6" y2="3" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="1.5" y1="6" x2="3" y2="6" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="3" y1="3" x2="4" y2="4" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
-      <Line x1="9" y1="3" x2="8" y2="4" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
-      {/* cloud body bottom-right */}
-      <Path
-        d="M7 15 Q7 12 10 12 Q10.5 10 13 10 Q16 10 16 13 Q18.5 13 18.5 15.5 Q18.5 17 16.5 17 L8.5 17 Q7 17 7 15 Z"
-        stroke="#93c5fd" strokeWidth="1.3" fill="none" strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-// 🌙 Moon — thick crescent using two overlapping circles (filled region), clearly a crescent
-function IconMoon({ color = "#a78bfa" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      {/*
-        Crescent drawn as the outer circle arc minus the inner cutout circle.
-        We draw a wide filled-looking crescent by using a thick stroked path
-        that traces a proper crescent silhouette.
-      */}
-      <Path
-        d="M13.5 14.5 A7 7 0 1 1 13.5 3.5 A4.5 4.5 0 0 0 13.5 14.5 Z"
-        stroke={color}
-        strokeWidth="1.4"
-        fill="none"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-// ⭐ Star — classic 5-point with filled center so it reads clearly
-function IconStar({ color = "#fbbf24" }: { color?: string }) {
-  return (
-    <Svg width={17} height={17} viewBox="0 0 17 17">
-      <Polygon
-        points="8.5,1.5 10.3,6.5 15.5,6.5 11.4,9.6 12.9,14.5 8.5,11.8 4.1,14.5 5.6,9.6 1.5,6.5 6.7,6.5"
-        stroke={color}
-        strokeWidth="1.2"
-        fill={color}
-        strokeLinejoin="round"
-        opacity={0.9}
-      />
-    </Svg>
-  );
-}
-
-// 👋 Waving hand — readable open-palm silhouette at small size
-function IconWave({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 22 22">
-      {/* thumb */}
-      <Path
-        d="M5 13 Q4 11 5.5 10 Q7 9 8 11"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"
-      />
-      {/* index finger */}
-      <Path
-        d="M8 11 L8 5 Q8 3.5 9.5 3.5 Q11 3.5 11 5 L11 10"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"
-      />
-      {/* middle finger */}
-      <Path
-        d="M11 10 L11 4 Q11 2.5 12.5 2.5 Q14 2.5 14 4 L14 10"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"
-      />
-      {/* ring finger */}
-      <Path
-        d="M14 10 L14 5 Q14 3.5 15.5 3.5 Q17 3.5 17 5 L17 11"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"
-      />
-      {/* palm + pinky */}
-      <Path
-        d="M17 11 Q18 9.5 18.5 11 L18.5 13 Q18.5 18 14 19 Q9 20 7 17 L5 13"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-// ✏️ Pencil — small edit hint icon
-function IconPencilSmall({ color = "#888" }: { color?: string }) {
-  return (
-    <Svg width={15} height={15} viewBox="0 0 15 15">
-      <Path d="M2 13 L3.5 8.5 L10 2 L13 5 L6.5 11.5 Z" stroke={color} strokeWidth="1.3" fill="none" strokeLinejoin="round" />
-      <Line x1="8.5" y1="3.5" x2="11.5" y2="6.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="2" y1="13" x2="5" y2="13" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getTimeGreeting(): { text: string; icon: React.ReactNode } {
+function getTimeGreeting(): { text: string; iconName: string; iconColor: string } {
   const h = new Date().getHours();
-  if (h >= 5 && h < 12) return { text: "Good morning", icon: <IconSun /> };
-  if (h >= 12 && h < 17) return { text: "Good afternoon", icon: <IconSunCloud /> };
-  if (h >= 17 && h < 21) return { text: "Good evening", icon: <IconMoon /> };
-  return { text: "Good night", icon: <IconStar /> };
+  if (h >= 5 && h < 12) return { text: "Good morning", iconName: "sun", iconColor: "#f59e0b" };
+  if (h >= 12 && h < 17) return { text: "Good afternoon", iconName: "cloud-sun", iconColor: "#f59e0b" };
+  if (h >= 17 && h < 21) return { text: "Good evening", iconName: "moon", iconColor: "#a78bfa" };
+  return { text: "Good night", iconName: "star", iconColor: "#fbbf24" };
 }
 
 function getInitials(name: string): string {
@@ -209,7 +88,7 @@ function NameModal({
           <View style={styles.modalBox}>
             {/* Wave icon */}
             <View style={styles.modalWaveWrap}>
-              <IconWave color="#c084fc" />
+              <FontAwesome6 name="hand" size={22} color="#c084fc" iconStyle="regular" />
             </View>
 
             {/* Title changes based on context */}
@@ -344,7 +223,7 @@ export function GreetingHeader({ onNameChange }: GreetingHeaderProps) {
   if (!loaded) return null;
 
   const hasName = username.trim().length > 0;
-  const { text: timeText, icon: timeIcon } = getTimeGreeting();
+  const { text: timeText, iconName, iconColor } = getTimeGreeting();
 
   // Greeting lines
   const topLine = timeText;
@@ -362,13 +241,13 @@ export function GreetingHeader({ onNameChange }: GreetingHeaderProps) {
         <View style={styles.textBlock}>
           <View style={styles.topLineRow}>
             <Text style={styles.topLine}>{topLine} </Text>
-            {timeIcon}
+            <FontAwesome6 name={iconName} size={14} color={iconColor} />
           </View>
           <View style={styles.mainLineRow}>
             <Text style={styles.mainLine} numberOfLines={1} adjustsFontSizeToFit>
               {bottomLine}
             </Text>
-            {hasName && <View style={styles.waveIcon}><IconWave color="#c084fc" /></View>}
+            {hasName && <View style={styles.waveIcon}><FontAwesome6 name="hand" size={18} color="#c084fc" iconStyle="regular" /></View>}
           </View>
         </View>
 
@@ -378,7 +257,7 @@ export function GreetingHeader({ onNameChange }: GreetingHeaderProps) {
         {/* Subtle pencil icon when no name — tappable hint */}
         {!hasName && (
           <View style={styles.editHint}>
-            <IconPencilSmall color="#888" />
+            <FontAwesome6 name="pencil" size={13} color="#888" />
           </View>
         )}
       </Pressable>

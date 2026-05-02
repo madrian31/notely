@@ -10,6 +10,8 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { JournalIcon } from "../components/create-journal-modal";
 import { Storage, STORAGE_KEYS } from "./storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ type Journal = {
   name: string;
   color: string;
   emoji: string;
+  iconId?: string;
 };
 
 // ─── Bible Books List ─────────────────────────────────────────────────────────
@@ -263,7 +266,7 @@ export default function BibleReaderScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
+          <FontAwesome6 name="chevron-left" size={18} color="#c084fc" />
         </Pressable>
 
         {/* Book + Chapter selectors */}
@@ -273,7 +276,7 @@ export default function BibleReaderScreen() {
             style={styles.selectorBtn}
           >
             <Text style={styles.selectorText}>{selectedBook}</Text>
-            <Text style={styles.selectorArrow}>▾</Text>
+            <FontAwesome6 name="caret-down" size={10} color="#555" />
           </Pressable>
 
           <Pressable
@@ -281,7 +284,7 @@ export default function BibleReaderScreen() {
             style={[styles.selectorBtn, { minWidth: 60 }]}
           >
             <Text style={styles.selectorText}>{currentChapter}</Text>
-            <Text style={styles.selectorArrow}>▾</Text>
+            <FontAwesome6 name="caret-down" size={10} color="#555" />
           </Pressable>
         </View>
 
@@ -323,7 +326,7 @@ export default function BibleReaderScreen() {
                 ]}
               >
                 {isSelected && (
-                  <Text style={styles.verseCheckmark}>✓</Text>
+                  <FontAwesome6 name="check" size={12} color="#e040fb" style={{ marginRight: 4 }} />
                 )}
                 <Text style={[styles.verseNumber, isSelected && { color: "#e040fb" }]}>
                   {item.verse}
@@ -347,7 +350,7 @@ export default function BibleReaderScreen() {
       {selectionMode && (
         <View style={[styles.selectionBar, { bottom: insets.bottom + 72 }]}>
           <Pressable onPress={cancelSelection} style={styles.selectionCancel}>
-            <Text style={styles.selectionCancelText}>✕ Cancel</Text>
+             <Text style={styles.selectionCancelText}><FontAwesome6 name="xmark" size={12} color="#888" /> Cancel</Text>
           </Pressable>
           <Text style={styles.selectionCount}>
             {selectedVerses.length} verse{selectedVerses.length !== 1 ? "s" : ""} selected
@@ -356,7 +359,7 @@ export default function BibleReaderScreen() {
             onPress={openJournalPickerForSelection}
             style={[styles.selectionJournalBtn, { opacity: selectedVerses.length > 0 ? 1 : 0.4 }]}
           >
-            <Text style={styles.selectionJournalBtnText}>✍️ Journal</Text>
+             <Text style={styles.selectionJournalBtnText}><FontAwesome6 name="pen-fancy" size={12} color="#fff" /> Journal</Text>
           </Pressable>
         </View>
       )}
@@ -416,7 +419,7 @@ export default function BibleReaderScreen() {
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Select Book</Text>
               <Pressable onPress={() => setShowBookPicker(false)}>
-                <Text style={styles.pickerClose}>✕</Text>
+                <FontAwesome6 name="xmark" size={14} color="#555" />
               </Pressable>
             </View>
             <FlatList
@@ -455,7 +458,7 @@ export default function BibleReaderScreen() {
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Select Chapter</Text>
               <Pressable onPress={() => setShowChapterPicker(false)}>
-                <Text style={styles.pickerClose}>✕</Text>
+                <FontAwesome6 name="xmark" size={14} color="#555" />
               </Pressable>
             </View>
             <FlatList
@@ -526,10 +529,10 @@ export default function BibleReaderScreen() {
 
               <View style={styles.journalPickerHeader}>
                 <Text style={styles.journalPickerTitle}>
-                  ✍️  Write about this verse
+                  <FontAwesome6 name="pen-fancy" size={13} color="#fff" />  Write about this verse
                 </Text>
                 <Pressable onPress={() => setShowJournalPicker(false)}>
-                  <Text style={styles.pickerClose}>✕</Text>
+                  <FontAwesome6 name="xmark" size={14} color="#555" />
                 </Pressable>
               </View>
 
@@ -559,12 +562,10 @@ export default function BibleReaderScreen() {
                         { backgroundColor: j.color + "22" },
                       ]}
                     >
-                      <Text style={{ fontSize: 18 }}>{j.emoji}</Text>
+                      <JournalIcon iconId={j.iconId ?? "journals"} color={j.color} size={18} />
                     </View>
                     <Text style={styles.journalPickerName}>{j.name}</Text>
-                    <Text style={[styles.journalPickerArrow, { color: j.color }]}>
-                      ›
-                    </Text>
+                    <FontAwesome6 name="chevron-right" size={14} color={j.color} />
                   </Pressable>
                 ))
               )}
@@ -778,7 +779,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   journalPickerName: { color: "#e0e0e0", fontSize: 15, fontWeight: "500", flex: 1 },
-  journalPickerArrow: { fontSize: 22, fontWeight: "300" },
+  journalPickerArrow: { width: 20, alignItems: "center", justifyContent: "center" },
   noJournals: { padding: 20, alignItems: "center" },
   noJournalsText: { color: "#444", fontSize: 13 },
 

@@ -1,3 +1,4 @@
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -41,9 +42,27 @@ type Prayer = {
 
 const STORAGE_KEY = "prayer_list";
 
-const PRAYER_EMOJIS = [
-    "🙏", "✝️", "💛", "❤️", "💙", "💚", "🕊️", "⭐", "🌟", "✨",
-    "🌸", "🌿", "🍃", "🌙", "☀️", "🔥", "💧", "🫶", "👐", "🌺",
+const PRAYER_ICONS = [
+    { key: "hands-praying", iconStyle: "solid" },
+    { key: "cross", iconStyle: "solid" },
+    { key: "heart", iconStyle: "solid" },
+    { key: "star", iconStyle: "solid" },
+    { key: "dove", iconStyle: "solid" },
+    { key: "fire", iconStyle: "solid" },
+    { key: "sun", iconStyle: "solid" },
+    { key: "moon", iconStyle: "solid" },
+    { key: "droplet", iconStyle: "solid" },
+    { key: "seedling", iconStyle: "solid" },
+    { key: "leaf", iconStyle: "solid" },
+    { key: "hand-holding-heart", iconStyle: "solid" },
+    { key: "shield-halved", iconStyle: "solid" },
+    { key: "church", iconStyle: "solid" },
+    { key: "book-bible", iconStyle: "solid" },
+    { key: "bolt", iconStyle: "solid" },
+    { key: "rainbow", iconStyle: "solid" },
+    { key: "infinity", iconStyle: "solid" },
+    { key: "peace", iconStyle: "solid" },
+    { key: "circle-nodes", iconStyle: "solid" },
 ];
 
 const AVAILABLE_TAGS = [
@@ -52,10 +71,10 @@ const AVAILABLE_TAGS = [
     "gratitude", "healing", "faith", "future",
 ];
 
-const STATUS_CONFIG: Record<PrayerStatus, { label: string; color: string; emoji: string }> = {
-    pending: { label: "Praying", color: "#c084fc", emoji: "🙏" },
-    answered: { label: "Answered", color: "#4ade80", emoji: "✅" },
-    archived: { label: "Archived", color: "#555", emoji: "📦" },
+const STATUS_CONFIG: Record<PrayerStatus, { label: string; color: string; faIcon: string; faStyle?: "regular" | "solid" }> = {
+    pending: { label: "Praying", color: "#c084fc", faIcon: "hands-praying" },
+    answered: { label: "Answered", color: "#4ade80", faIcon: "circle-check" },
+    archived: { label: "Archived", color: "#555", faIcon: "box-archive" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -77,7 +96,7 @@ export default function PrayerListScreen() {
     const [editingPrayer, setEditingPrayer] = useState<Prayer | null>(null);
     const [formTitle, setFormTitle] = useState("");
     const [formDesc, setFormDesc] = useState("");
-    const [formEmoji, setFormEmoji] = useState("🙏");
+    const [formEmoji, setFormEmoji] = useState("hands-praying");
     const [formTags, setFormTags] = useState<string[]>([]);
     const [formPrivate, setFormPrivate] = useState(true);
 
@@ -118,7 +137,7 @@ export default function PrayerListScreen() {
         setEditingPrayer(null);
         setFormTitle("");
         setFormDesc("");
-        setFormEmoji("🙏");
+        setFormEmoji("hands-praying");
         setFormTags([]);
         setFormPrivate(true);
         setFormVisible(true);
@@ -231,7 +250,7 @@ export default function PrayerListScreen() {
                     onPress={openAddForm}
                     style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
                 >
-                    <Text style={styles.addBtnText}>＋</Text>
+                    <FontAwesome6 name="plus" size={18} color="#fff" />
                 </Pressable>
             </View>
 
@@ -259,7 +278,7 @@ export default function PrayerListScreen() {
             {/* Empty state — no flex:1 so it doesn't overlap the filter pills */}
             {filtered.length === 0 && (
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyIcon}>🙏</Text>
+                    <FontAwesome6 name="hands-praying" size={36} color="#c084fc" />
                     <Text style={styles.emptyText}>
                         {filterStatus === "all" ? "No prayers yet" : `No ${filterStatus} prayers`}
                     </Text>
@@ -289,7 +308,7 @@ export default function PrayerListScreen() {
 
                             {/* Emoji */}
                             <View style={styles.prayerEmojiBg}>
-                                <Text style={styles.prayerEmoji}>{item.emoji}</Text>
+                                <FontAwesome6 name={item.emoji || "hands-praying"} size={18} color="#c084fc" />
                             </View>
 
                             {/* Content */}
@@ -317,11 +336,11 @@ export default function PrayerListScreen() {
 
                             {/* Right side */}
                             <View style={styles.prayerRight}>
-                                <Text style={{ fontSize: 14 }}>{statusCfg.emoji}</Text>
+                                <FontAwesome6 name={statusCfg.faIcon} size={14} color={statusCfg.color} />
                                 {item.updates.length > 0 && (
                                     <Text style={styles.updateBadge}>{item.updates.length}</Text>
                                 )}
-                                {item.isPrivate && <Text style={styles.lockIcon}>🔒</Text>}
+                                {item.isPrivate && <FontAwesome6 name="lock" size={11} color="#555" />}
                             </View>
                         </Pressable>
                     );
@@ -362,16 +381,16 @@ export default function PrayerListScreen() {
                             <Text style={styles.fieldLabel}>ICON</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                                 <View style={{ flexDirection: "row", gap: 10 }}>
-                                    {PRAYER_EMOJIS.map((e) => (
+                                    {PRAYER_ICONS.map((icon) => (
                                         <Pressable
-                                            key={e}
-                                            onPress={() => setFormEmoji(e)}
+                                            key={icon.key}
+                                            onPress={() => setFormEmoji(icon.key)}
                                             style={[
                                                 styles.emojiBtn,
-                                                formEmoji === e && { borderColor: "#c084fc", backgroundColor: "#c084fc18" },
+                                                formEmoji === icon.key && { borderColor: "#c084fc", backgroundColor: "#c084fc18" },
                                             ]}
                                         >
-                                            <Text style={{ fontSize: 22 }}>{e}</Text>
+                                            <FontAwesome6 name={icon.key} size={20} color={formEmoji === icon.key ? "#c084fc" : "#666"} />
                                         </Pressable>
                                     ))}
                                 </View>
@@ -468,13 +487,13 @@ export default function PrayerListScreen() {
                                 {/* Prayer header */}
                                 <View style={styles.detailHead}>
                                     <View style={[styles.detailEmojiBg, { backgroundColor: statusCfg.color + "20" }]}>
-                                        <Text style={{ fontSize: 36 }}>{selectedPrayer.emoji}</Text>
+                                        <FontAwesome6 name={selectedPrayer.emoji || "hands-praying"} size={32} color="#c084fc" />
                                     </View>
                                     <Text style={styles.detailTitle}>{selectedPrayer.title}</Text>
 
                                     {/* Status badge */}
                                     <View style={[styles.statusBadge, { backgroundColor: statusCfg.color + "20", borderColor: statusCfg.color + "50" }]}>
-                                        <Text style={{ fontSize: 12 }}>{statusCfg.emoji}</Text>
+                                        <FontAwesome6 name={statusCfg.faIcon} size={12} color={statusCfg.color} />
                                         <Text style={[styles.statusBadgeText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
                                     </View>
 
@@ -499,7 +518,7 @@ export default function PrayerListScreen() {
                                     </Text>
                                     {selectedPrayer.answeredAt && (
                                         <Text style={[styles.detailDate, { color: "#4ade80" }]}>
-                                            ✅ Answered {new Date(selectedPrayer.answeredAt).toLocaleDateString("default", { month: "long", day: "numeric", year: "numeric" })}
+                                            <FontAwesome6 name="circle-check" size={12} color="#4ade80" /> Answered {new Date(selectedPrayer.answeredAt).toLocaleDateString("default", { month: "long", day: "numeric", year: "numeric" })}
                                         </Text>
                                     )}
                                 </View>
@@ -510,7 +529,7 @@ export default function PrayerListScreen() {
                                         onPress={() => markAnswered(selectedPrayer)}
                                         style={({ pressed }) => [styles.answeredBtn, pressed && { opacity: 0.75 }]}
                                     >
-                                        <Text style={styles.answeredBtnText}>✅  Mark as Answered</Text>
+                                        <Text style={styles.answeredBtnText}><FontAwesome6 name="circle-check" size={14} color="#fff" />  Mark as Answered</Text>
                                     </Pressable>
                                 )}
 
@@ -531,7 +550,7 @@ export default function PrayerListScreen() {
                                             onPress={addUpdate}
                                             style={({ pressed }) => [styles.updateSendBtn, pressed && { opacity: 0.7 }]}
                                         >
-                                            <Text style={styles.updateSendText}>→</Text>
+                                            <FontAwesome6 name="paper-plane" size={14} color="#fff" />
                                         </Pressable>
                                     </View>
 
@@ -572,7 +591,7 @@ export default function PrayerListScreen() {
                                     {menuPrayer?.title || "Options"}
                                 </Text>
                                 <Pressable onPress={() => setMenuVisible(false)} style={styles.menuClose}>
-                                    <Text style={styles.menuCloseText}>✕</Text>
+                                    <FontAwesome6 name="xmark" size={14} color="#555" />
                                 </Pressable>
                             </View>
 
@@ -582,7 +601,7 @@ export default function PrayerListScreen() {
                                         onPress={() => menuPrayer && markAnswered(menuPrayer)}
                                         style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: "#1a1a1a" }]}
                                     >
-                                        <Text style={styles.menuRowIcon}>✅</Text>
+                                        <FontAwesome6 name="circle-check" size={16} color="#4ade80" />
                                         <Text style={styles.menuRowText}>Mark as Answered</Text>
                                     </Pressable>
                                     <View style={styles.menuDivider} />
@@ -593,7 +612,7 @@ export default function PrayerListScreen() {
                                 onPress={() => { if (menuPrayer) { openEditForm(menuPrayer); setMenuVisible(false); } }}
                                 style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: "#1a1a1a" }]}
                             >
-                                <Text style={styles.menuRowIcon}>✏️</Text>
+                                <FontAwesome6 name="pen-to-square" size={16} color="#e0e0e0" iconStyle="regular" />
                                 <Text style={styles.menuRowText}>Edit</Text>
                             </Pressable>
                             <View style={styles.menuDivider} />
@@ -604,7 +623,7 @@ export default function PrayerListScreen() {
                                         onPress={() => menuPrayer && archivePrayer(menuPrayer)}
                                         style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: "#1a1a1a" }]}
                                     >
-                                        <Text style={styles.menuRowIcon}>📦</Text>
+                                        <FontAwesome6 name="box-archive" size={16} color="#e0e0e0" />
                                         <Text style={styles.menuRowText}>Archive</Text>
                                     </Pressable>
                                     <View style={styles.menuDivider} />
@@ -615,7 +634,7 @@ export default function PrayerListScreen() {
                                 onPress={() => menuPrayer && deletePrayer(menuPrayer)}
                                 style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: "#1a1a1a" }]}
                             >
-                                <Text style={styles.menuRowIcon}>🗑️</Text>
+                                <FontAwesome6 name="trash-can" size={16} color="#f87171" />
                                 <Text style={[styles.menuRowText, { color: "#f87171" }]}>Delete</Text>
                             </Pressable>
                         </View>

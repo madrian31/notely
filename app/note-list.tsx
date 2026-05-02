@@ -9,77 +9,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Line, Path, Polyline } from "react-native-svg";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Storage, STORAGE_KEYS } from "./storage";
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function IconBack({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 22 22">
-      <Path d="M14 5 L7 11 L14 17" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function IconPlus({ color = "#c084fc" }: { color?: string }) {
-  return (
-    <Svg width={24} height={24} viewBox="0 0 24 24">
-      <Line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <Line x1="5" y1="12" x2="19" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconPen({ color = "#888" }: { color?: string }) {
-  return (
-    <Svg width={44} height={44} viewBox="0 0 44 44">
-      <Path d="M10 34 L14 20 L30 8 L36 14 L20 30 Z" stroke={color} strokeWidth="1.8" fill="none" strokeLinejoin="round" />
-      <Line x1="26" y1="10" x2="34" y2="18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="10" y1="34" x2="18" y2="34" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconMore({ color = "#444" }: { color?: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 20 20">
-      <Circle cx="10" cy="4" r="1.5" fill={color} />
-      <Circle cx="10" cy="10" r="1.5" fill={color} />
-      <Circle cx="10" cy="16" r="1.5" fill={color} />
-    </Svg>
-  );
-}
-
-function IconClose({ color = "#555" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Line x1="4" y1="4" x2="14" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="14" y1="4" x2="4" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconEdit({ color = "#e0e0e0" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Path d="M3 15 L5 10 L13 2 L16 5 L8 13 Z" stroke={color} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-      <Line x1="11" y1="3.5" x2="14.5" y2="7" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="3" y1="15" x2="7" y2="15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function IconTrash({ color = "#f87171" }: { color?: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Polyline points="3,5 15,5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M6 5V3h6v2" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M4 5l1 10h8l1-10" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Line x1="9" y1="8" x2="9" y2="13" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 type Note = {
   id: string;
@@ -156,7 +87,7 @@ export default function NoteList() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <IconBack color={journalColor} />
+          <FontAwesome6 name="chevron-left" size={18} color={journalColor} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {journalName}
@@ -166,14 +97,14 @@ export default function NoteList() {
           style={styles.addBtn}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <IconPlus color={journalColor} />
+          <FontAwesome6 name="plus" size={18} color={journalColor} />
         </Pressable>
       </View>
 
       {/* Empty state */}
       {notes.length === 0 && (
         <View style={styles.emptyState}>
-          <IconPen color="#333" />
+          <FontAwesome6 name="pen" size={36} color="#333" />
           <Text style={styles.emptyText}>No entries yet</Text>
           <Text style={styles.emptySubtext}>
             Tap + to write your first entry
@@ -225,7 +156,7 @@ export default function NoteList() {
                   style={styles.moreBtn}
                   hitSlop={8}
                 >
-                  <IconMore />
+                  <FontAwesome6 name="ellipsis-vertical" size={16} color="#444" />
                 </Pressable>
               </Pressable>
             ))}
@@ -254,7 +185,7 @@ export default function NoteList() {
                   onPress={() => setMenuVisible(false)}
                   style={styles.menuClose}
                 >
-                  <IconClose />
+                  <FontAwesome6 name="xmark" size={16} color="#555" />
                 </Pressable>
               </View>
 
@@ -268,7 +199,7 @@ export default function NoteList() {
                   pressed && { backgroundColor: "#1a1a1a" },
                 ]}
               >
-                <IconEdit />
+                <FontAwesome6 name="pen-to-square" size={16} color="#e0e0e0" iconStyle="regular" />
                 <Text style={styles.menuRowText}>Edit</Text>
               </Pressable>
 
@@ -284,7 +215,7 @@ export default function NoteList() {
                   pressed && { backgroundColor: "#1a1a1a" },
                 ]}
               >
-                <IconTrash />
+                <FontAwesome6 name="trash-can" size={16} color="#f87171" />
                 <Text style={[styles.menuRowText, { color: "#f87171" }]}>
                   Delete
                 </Text>
@@ -332,6 +263,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 120,
+    gap: 8,
   },
   emptyIcon: { fontSize: 40, marginBottom: 12 },
   emptyText: {

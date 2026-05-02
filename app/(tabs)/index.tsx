@@ -9,56 +9,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import CreateJournalModal, { JournalIcon } from "../../components/create-journal-modal";
 import { GreetingHeader } from "../../components/greeting-header";
 import { Storage, STORAGE_KEYS } from "../storage";
-
-// ─── Stat Icons ───────────────────────────────────────────────────────────────
-function StatIconJournals({ color = "#888" }: { color?: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 22 22">
-      <Rect x="4" y="6" width="14" height="13" rx="2.5" stroke={color} strokeWidth="1.5" fill="none" />
-      <Rect x="6" y="3" width="12" height="13" rx="2" stroke={color} strokeWidth="1.2" fill="none" />
-      <Line x1="7" y1="11" x2="15" y2="11" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="7" y1="14" x2="13" y2="14" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function StatIconEntries({ color = "#888" }: { color?: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 22 22">
-      <Path d="M4 4h14v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke={color} strokeWidth="1.5" fill="none" />
-      <Line x1="7" y1="9" x2="15" y2="9" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="7" y1="12" x2="15" y2="12" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="7" y1="15" x2="11" y2="15" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
-      <Path d="M4 4l7-2 7 2" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function StatIconWords({ color = "#888" }: { color?: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 22 22">
-      <Path d="M3 6h16M3 10h16M3 14h10" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <Circle cx="17" cy="17" r="3.5" stroke={color} strokeWidth="1.4" fill="none" />
-      <Line x1="19.5" y1="19.5" x2="21" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function EmptyJournalIcon({ color = "#555" }: { color?: string }) {
-  return (
-    <Svg width={48} height={48} viewBox="0 0 48 48">
-      <Rect x="8" y="12" width="30" height="28" rx="4" stroke={color} strokeWidth="2" fill="none" />
-      <Rect x="12" y="8" width="28" height="28" rx="3.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Line x1="16" y1="22" x2="32" y2="22" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="16" y1="27" x2="28" y2="27" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="16" y1="32" x2="24" y2="32" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 export type Journal = {
   id: string;
@@ -241,7 +195,7 @@ export default function HomeScreen() {
         </View>
         <View style={styles.cardRight}>
           <Text style={[styles.noteCount, { color: item.color }]}>{count}</Text>
-          <Text style={[styles.chevron, { color: item.color }]}>›</Text>
+          <FontAwesome6 name="chevron-right" size={12} color={item.color} />
         </View>
       </Pressable>
     );
@@ -257,17 +211,17 @@ export default function HomeScreen() {
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <StatIconJournals color="#c084fc" />
+          <FontAwesome6 name="book-open" size={20} color="#c084fc" />
           <Text style={styles.statValue}>{journals.length}</Text>
           <Text style={styles.statLabel}>Journals</Text>
         </View>
         <View style={styles.statCard}>
-          <StatIconEntries color="#60a5fa" />
+          <FontAwesome6 name="file-lines" size={20} color="#60a5fa" iconStyle="regular" />
           <Text style={styles.statValue}>{totalNotes}</Text>
           <Text style={styles.statLabel}>Entries</Text>
         </View>
         <View style={styles.statCard}>
-          <StatIconWords color="#34d399" />
+          <FontAwesome6 name="font" size={20} color="#34d399" />
           <Text style={styles.statValue}>{totalWords.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Words</Text>
         </View>
@@ -277,7 +231,7 @@ export default function HomeScreen() {
 
       {journals.length === 0 ? (
         <View style={styles.emptyState}>
-          <EmptyJournalIcon color="#333" />
+          <FontAwesome6 name="book" size={40} color="#333" />
           <Text style={styles.emptyText}>No journals yet</Text>
           <Text style={styles.emptySub}>
             Tap the + button below to get started
@@ -302,10 +256,7 @@ export default function HomeScreen() {
           pressed && styles.fabPressed,
         ]}
       >
-        <View style={styles.fabPlus}>
-          <View style={styles.fabPlusH} />
-          <View style={styles.fabPlusV} />
-        </View>
+        <FontAwesome6 name="plus" size={18} color="#fff" />
       </Pressable>
 
       {/* ── Press-hold Options Menu ── */}
@@ -338,10 +289,7 @@ export default function HomeScreen() {
                   style={styles.menuClose}
                   hitSlop={8}
                 >
-                  <Svg width={18} height={18} viewBox="0 0 18 18">
-                    <Line x1="4" y1="4" x2="14" y2="14" stroke="#555" strokeWidth="1.8" strokeLinecap="round" />
-                    <Line x1="14" y1="4" x2="4" y2="14" stroke="#555" strokeWidth="1.8" strokeLinecap="round" />
-                  </Svg>
+                  <FontAwesome6 name="xmark" size={16} color="#555" />
                 </Pressable>
               </View>
 
@@ -352,11 +300,7 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: "#1e1e1e" },
                 ]}
               >
-                <Svg width={18} height={18} viewBox="0 0 18 18">
-                  <Path d="M3 15 L5 10 L13 2 L16 5 L8 13 Z" stroke="#e0e0e0" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-                  <Line x1="11" y1="3.5" x2="14.5" y2="7" stroke="#e0e0e0" strokeWidth="1.5" strokeLinecap="round" />
-                  <Line x1="3" y1="15" x2="7" y2="15" stroke="#e0e0e0" strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
+                <FontAwesome6 name="pen-to-square" size={16} color="#e0e0e0" iconStyle="regular" />
                 <Text style={styles.menuRowText}>Edit Journal</Text>
               </Pressable>
 
@@ -369,12 +313,7 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: "#1e1e1e" },
                 ]}
               >
-                <Svg width={18} height={18} viewBox="0 0 18 18">
-                  <Polyline points="3,5 15,5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
-                  <Path d="M6 5V3h6v2" stroke="#f87171" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M4 5l1 10h8l1-10" stroke="#f87171" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  <Line x1="9" y1="8" x2="9" y2="13" stroke="#f87171" strokeWidth="1.3" strokeLinecap="round" />
-                </Svg>
+                <FontAwesome6 name="trash-can" size={16} color="#f87171" />
                 <Text style={[styles.menuRowText, { color: "#f87171" }]}>
                   Delete Journal
                 </Text>

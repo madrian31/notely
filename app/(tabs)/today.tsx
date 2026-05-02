@@ -1,5 +1,6 @@
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -54,11 +55,113 @@ function IconPlus({ color = "#fff" }: { color?: string }) {
   );
 }
 
-function IconPraying({ size = 32 }: { size?: number }) {
+function IconPraying({ size = 32, color = "#444" }: { size?: number; color?: string }) {
+  // Bootstrap: hand-index-thumb — folded hands / pray gesture
   return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
-      <Line x1="16" y1="4" x2="16" y2="28" stroke="#444" strokeWidth="3" strokeLinecap="round" />
-      <Line x1="8" y1="11" x2="24" y2="11" stroke="#444" strokeWidth="3" strokeLinecap="round" />
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path
+        d="M6.75 1a.75.75 0 0 1 .75.75V8a.5.5 0 0 0 1 0V5.467l.086-.004c.317-.012.637.008.816.1.134.068.319.224.422.41.038.073.6.336.86 1.579C11.61 7.97 11.822 9.39 12 10c.34 1.28.56 2.5.436 3.367C12.296 14.605 11.36 15 10 15H8.077a.75.75 0 0 1-.545-.232L5.7 12.817l.002-.002.002-.003a.5.5 0 0 0-.706-.707l-.002.002L3.25 13.857A.75.75 0 0 1 2 13.27V11a.75.75 0 0 1 .22-.53l2.53-2.53A.5.5 0 0 0 5 7.5V1.75A.75.75 0 0 1 5.75 1zm1.5 0a.75.75 0 0 1 .75.75v4.5a.5.5 0 0 0 1 0v-4.5a.75.75 0 0 1 1.5 0V8.5a.5.5 0 0 0 1 0V4.75a.75.75 0 0 1 1.5 0V11a.75.75 0 0 1-.22.53l-2.53 2.53A.5.5 0 0 0 11 14.5v.25a.75.75 0 0 1-1.5 0V14a.5.5 0 0 0-.5-.5H8.5a.5.5 0 0 0-.5.5v.75a.75.75 0 0 1-1.5 0V1.75A.75.75 0 0 1 8.25 1z"
+        fill={color}
+        opacity={0.8}
+      />
+    </Svg>
+  );
+}
+
+// Bootstrap check-circle-fill
+function IconCheckCircleFill({ color = "#4ade80", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" fill={color} />
+    </Svg>
+  );
+}
+
+// Bootstrap archive
+function IconArchiveFill({ color = "#888", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M12.643 15C13.979 15 15 13.845 15 12.5V7H1v5.5C1 13.845 2.021 15 3.357 15zM15 3h-1v-1a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1 0-1" fill={color} />
+    </Svg>
+  );
+}
+
+// Bootstrap chevron-right
+function IconChevronRight({ color = "#333", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708" fill={color} />
+    </Svg>
+  );
+}
+
+// Bootstrap send (arrow-right-circle-fill) for update send button
+function IconSend({ color = "#fff", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M0 8a8 8 0 1 0 16 0A8 8 0 0 0 0 8m4.5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5a.5.5 0 0 1 0-1" fill={color} />
+    </Svg>
+  );
+}
+
+// Helper to render status icon from emoji key
+function renderStatusIcon(emoji: string, color: string, size = 14): React.ReactNode {
+  if (emoji === "pray") return <IconPraying color={color} size={size} />;
+  if (emoji === "check") return <IconCheckCircleFill color={color} size={size} />;
+  if (emoji === "archive") return <IconArchiveFill color={color} size={size} />;
+  return null;
+}
+
+// ─── Aliased / Extra Bootstrap Icons ─────────────────────────────────────────
+
+/** Alias: same as IconPraying */
+function IconPray({ color = "#c084fc", size = 22 }: { color?: string; size?: number }) {
+  return <IconPraying color={color} size={size} />;
+}
+
+/** Alias: same as IconCheckCircleFill */
+function IconCheckCircle({ color = "#4ade80", size = 16 }: { color?: string; size?: number }) {
+  return <IconCheckCircleFill color={color} size={size} />;
+}
+
+/** Alias: same as IconArchiveFill */
+function IconArchive({ color = "#555", size = 16 }: { color?: string; size?: number }) {
+  return <IconArchiveFill color={color} size={size} />;
+}
+
+/** Bootstrap: lock-fill */
+function IconLock({ color = "#555", size = 12 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" fill={color} />
+    </Svg>
+  );
+}
+
+/** Bootstrap: x-lg */
+function IconClose({ color = "#555", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" fill={color} />
+    </Svg>
+  );
+}
+
+/** Bootstrap: pencil-square */
+function IconEdit({ color = "#e0e0e0", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" fill={color} />
+      <Path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" fill={color} />
+    </Svg>
+  );
+}
+
+/** Bootstrap: trash3 */
+function IconTrash({ color = "#f87171", size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16">
+      <Path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" fill={color} />
     </Svg>
   );
 }
@@ -173,9 +276,27 @@ const PRAYER_VIEW_KEY = "prayer_view_mode";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const CARD_WIDTH = SCREEN_WIDTH - 40 - 32; // container padding + carousel padding
 
-const PRAYER_EMOJIS = [
-  "🙏", "✝️", "💛", "❤️", "💙", "💚", "🕊️", "⭐", "🌟", "✨",
-  "🌸", "🌿", "🍃", "🌙", "☀️", "🔥", "💧", "🫶", "👐", "🌺",
+const PRAYER_ICONS = [
+  { key: "hands-praying", iconStyle: "solid" },
+  { key: "cross", iconStyle: "solid" },
+  { key: "heart", iconStyle: "solid" },
+  { key: "star", iconStyle: "solid" },
+  { key: "dove", iconStyle: "solid" },
+  { key: "fire", iconStyle: "solid" },
+  { key: "sun", iconStyle: "solid" },
+  { key: "moon", iconStyle: "solid" },
+  { key: "droplet", iconStyle: "solid" },
+  { key: "seedling", iconStyle: "solid" },
+  { key: "leaf", iconStyle: "solid" },
+  { key: "hand-holding-heart", iconStyle: "solid" },
+  { key: "shield-halved", iconStyle: "solid" },
+  { key: "church", iconStyle: "solid" },
+  { key: "book-bible", iconStyle: "solid" },
+  { key: "circle-nodes", iconStyle: "solid" },
+  { key: "bolt", iconStyle: "solid" },
+  { key: "rainbow", iconStyle: "solid" },
+  { key: "infinity", iconStyle: "solid" },
+  { key: "peace", iconStyle: "solid" },
 ];
 
 const AVAILABLE_TAGS = [
@@ -185,9 +306,9 @@ const AVAILABLE_TAGS = [
 ];
 
 const STATUS_CONFIG: Record<PrayerStatus, { label: string; color: string; emoji: string }> = {
-  pending: { label: "Praying", color: "#c084fc", emoji: "🙏" },
-  answered: { label: "Answered", color: "#4ade80", emoji: "✅" },
-  archived: { label: "Archived", color: "#555", emoji: "📦" },
+  pending: { label: "Praying", color: "#c084fc", emoji: "pray" },
+  answered: { label: "Answered", color: "#4ade80", emoji: "check" },
+  archived: { label: "Archived", color: "#555", emoji: "archive" },
 };
 
 // ─── Bible helpers ────────────────────────────────────────────────────────────
@@ -264,7 +385,7 @@ export default function TodayScreen() {
   const [formVisible, setFormVisible] = useState(false);
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formEmoji, setFormEmoji] = useState("🙏");
+  const [formEmoji, setFormEmoji] = useState("hands-praying");
   const [formTags, setFormTags] = useState<string[]>([]);
   const [formPrivate, setFormPrivate] = useState(true);
 
@@ -334,7 +455,7 @@ export default function TodayScreen() {
   };
 
   const openAddForm = () => {
-    setFormTitle(""); setFormDesc(""); setFormEmoji("🙏"); setFormTags([]); setFormPrivate(true);
+    setFormTitle(""); setFormDesc(""); setFormEmoji("hands-praying"); setFormTags([]); setFormPrivate(true);
     setFormVisible(true);
   };
 
@@ -482,7 +603,7 @@ export default function TodayScreen() {
       {/* Empty prayer state */}
       {pendingPrayers.length === 0 && (
         <Pressable onPress={openAddForm} style={styles.prayerEmpty}>
-          <View style={{ marginBottom: 10 }}><IconPraying size={36} /></View>
+          <View style={{ marginBottom: 10 }}><FontAwesome6 name="hands-praying" size={36} color="#444" /></View>
           <Text style={styles.prayerEmptyText}>No active prayers</Text>
           <Text style={styles.prayerEmptySub}>Tap + to add your first prayer</Text>
         </Pressable>
@@ -501,7 +622,7 @@ export default function TodayScreen() {
               >
                 <View style={[styles.prayerListAccent, { backgroundColor: cfg.color }]} />
                 <View style={styles.prayerListEmojiBg}>
-                  <Text style={{ fontSize: 18 }}>{prayer.emoji}</Text>
+                  <FontAwesome6 name={prayer.emoji || "hands-praying"} size={16} color="#c084fc" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.prayerListTitle} numberOfLines={1}>{prayer.title}</Text>
@@ -524,7 +645,7 @@ export default function TodayScreen() {
                       <Text style={styles.updateBadgeText}>{prayer.updates.length}</Text>
                     </View>
                   )}
-                  <Text style={styles.chevron}>›</Text>
+                  <IconChevronRight color="#333" size={16} />
                 </View>
               </Pressable>
             );
@@ -567,7 +688,7 @@ export default function TodayScreen() {
                 >
                   {/* Emoji top-left */}
                   <View style={styles.carouselEmojiBg}>
-                    <Text style={styles.carouselEmoji}>{prayer.emoji}</Text>
+                    <FontAwesome6 name={prayer.emoji || "hands-praying"} size={28} color="#c084fc" />
                   </View>
 
                   {/* Content below */}
@@ -710,13 +831,13 @@ export default function TodayScreen() {
               <Text style={styles.fieldLabel}>ICON</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <View style={{ flexDirection: "row", gap: 10 }}>
-                  {PRAYER_EMOJIS.map((e) => (
+                  {PRAYER_ICONS.map((icon) => (
                     <Pressable
-                      key={e}
-                      onPress={() => setFormEmoji(e)}
-                      style={[styles.emojiBtn, formEmoji === e && { borderColor: "#c084fc", backgroundColor: "#c084fc18" }]}
+                      key={icon.key}
+                      onPress={() => setFormEmoji(icon.key)}
+                      style={[styles.emojiBtn, formEmoji === icon.key && { borderColor: "#c084fc", backgroundColor: "#c084fc18" }]}
                     >
-                      <Text style={{ fontSize: 22 }}>{e}</Text>
+                      <FontAwesome6 name={icon.key} size={20} color={formEmoji === icon.key ? "#c084fc" : "#666"} />
                     </Pressable>
                   ))}
                 </View>
@@ -804,11 +925,11 @@ export default function TodayScreen() {
                 {/* Head */}
                 <View style={styles.detailHead}>
                   <View style={[styles.detailEmojiBg, { backgroundColor: cfg.color + "20" }]}>
-                    <Text style={{ fontSize: 36 }}>{selectedPrayer.emoji}</Text>
+                    <FontAwesome6 name={selectedPrayer.emoji || "hands-praying"} size={32} color="#c084fc" />
                   </View>
                   <Text style={styles.detailTitle}>{selectedPrayer.title}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: cfg.color + "20", borderColor: cfg.color + "50" }]}>
-                    <Text style={{ fontSize: 12 }}>{cfg.emoji}</Text>
+                    <View>{renderStatusIcon(cfg.emoji, cfg.color, 13)}</View>
                     <Text style={[styles.statusBadgeText, { color: cfg.color }]}>{cfg.label}</Text>
                   </View>
                   {selectedPrayer.description ? (
@@ -832,7 +953,7 @@ export default function TodayScreen() {
                     onPress={() => markAnswered(selectedPrayer)}
                     style={({ pressed }) => [styles.answeredBtn, pressed && { opacity: 0.75 }]}
                   >
-                    <Text style={styles.answeredBtnText}>✅  Mark as Answered</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><IconCheckCircleFill color="#4ade80" size={16} /><Text style={styles.answeredBtnText}>Mark as Answered</Text></View>
                   </Pressable>
                 )}
 
@@ -850,7 +971,7 @@ export default function TodayScreen() {
                       multiline
                     />
                     <Pressable onPress={addUpdate} style={({ pressed }) => [styles.updateSendBtn, pressed && { opacity: 0.7 }]}>
-                      <Text style={styles.updateSendText}>→</Text>
+                      <IconSend color="#fff" size={20} />
                     </Pressable>
                   </View>
                   {selectedPrayer.updates.length === 0 && (
@@ -928,7 +1049,7 @@ const styles = StyleSheet.create({
   prayerListTitle: { color: "#f0f0f0", fontSize: 14, fontWeight: "600" },
   prayerListDesc: { color: "#555", fontSize: 12, marginTop: 2 },
   prayerListRight: { alignItems: "center", gap: 4 },
-  chevron: { color: "#333", fontSize: 20 },
+  chevron: { width: 16, height: 16, alignItems: "center", justifyContent: "center" },
 
   // Carousel view
   carouselCard: {
@@ -1023,7 +1144,7 @@ const styles = StyleSheet.create({
   updateInputRow: { flexDirection: "row", gap: 10, marginTop: 8, marginBottom: 16 },
   updateInput: { flex: 1, backgroundColor: "#1a1a1a", borderRadius: 12, color: "#f0f0f0", fontSize: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: "#252525", maxHeight: 80 },
   updateSendBtn: { width: 46, height: 46, borderRadius: 12, backgroundColor: "#c084fc", alignItems: "center", justifyContent: "center", alignSelf: "flex-end" },
-  updateSendText: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  updateSendText: { color: "#fff" },
   noUpdates: { color: "#333", fontSize: 13, textAlign: "center", paddingVertical: 16 },
   updateCard: { flexDirection: "row", gap: 12, marginBottom: 14 },
   updateDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#c084fc", marginTop: 6 },
