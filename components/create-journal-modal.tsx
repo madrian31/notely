@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+﻿import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import React, { useState } from "react";
 import {
   Dimensions,
   Modal,
@@ -6,40 +7,32 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  View
+  View,
 } from "react-native";
-import Svg, {
-  Circle,
-  Line,
-  Path,
-  Rect
-} from "react-native-svg";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Svg, { Circle, Path } from "react-native-svg";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const ICON_SIZE = Math.min((SCREEN_WIDTH - 40 - 6 * 8) / 7, 48);
 
-// â”€â”€â”€ Color Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Color Palette ────────────────────────────────────────────────────────────
 const COLORS = [
-  "#9b3a6a", // maroon-pink
-  "#e03535", // red
-  "#e060a0", // hot pink
-  "#e07070", // salmon
-  "#c49060", // tan
-  "#f0904a", // orange
-  "#00c896", // emerald
-  "#00bcd4", // cyan
-  "#3b5fe0", // blue
-  "#607890", // slate
-  "#80b0e8", // light blue (default selected)
-  "#9060d0", // purple
-  "#111111", // black
-  "rainbow",  // multicolor
+  "#9b3a6a",
+  "#e03535",
+  "#e060a0",
+  "#e07070",
+  "#c49060",
+  "#f0904a",
+  "#00c896",
+  "#00bcd4",
+  "#3b5fe0",
+  "#607890",
+  "#80b0e8",
+  "#9060d0",
+  "#111111",
+  "rainbow",
 ];
 
-// â”€â”€â”€ FontAwesome6 Icon Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Maps icon IDs to FontAwesome6 icon names + optional style
-
+// ─── FontAwesome6 Icon Mapping ────────────────────────────────────────────────
 type FAIconDef = { name: string; style?: "regular" | "solid" };
 
 const ICON_MAP: Record<string, FAIconDef> = {
@@ -114,24 +107,44 @@ const ICON_MAP: Record<string, FAIconDef> = {
   facebaby: { name: "baby", style: "solid" },
 };
 
-// Icon IDs in display order
 const ICON_IDS = Object.keys(ICON_MAP);
 
-// â”€â”€â”€ Icon Registry (backward compatible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function FAIconComponent({ color = "#555", iconId }: { color?: string; iconId: string }) {
+// ─── Icon component ───────────────────────────────────────────────────────────
+function FAIconComponent({
+  color = "#555",
+  iconId,
+}: {
+  color?: string;
+  iconId: string;
+}) {
   const def = ICON_MAP[iconId];
   if (!def) return null;
-  return <FontAwesome6 name={def.name} size={20} color={color} iconStyle={def.style ?? "solid"} />;
+  return (
+    <FontAwesome6
+      name={def.name}
+      size={20}
+      color={color}
+      iconStyle={def.style ?? "solid"}
+    />
+  );
 }
 
-const ICONS: { id: string; component: React.FC<{ color?: string }> }[] = ICON_IDS.map((id) => ({
-  id,
-  component: ({ color }: { color?: string }) => <FAIconComponent color={color} iconId={id} />,
-}));
+const ICONS: { id: string; component: React.FC<{ color?: string }> }[] =
+  ICON_IDS.map((id) => ({
+    id,
+    component: ({ color }: { color?: string }) => (
+      <FAIconComponent color={color} iconId={id} />
+    ),
+  }));
 
-// â”€â”€â”€ Rainbow Circle (SVG) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function RainbowCircle({ size = 32, selected = false }: { size?: number; selected?: boolean }) {
+// ─── Rainbow Circle (SVG) ─────────────────────────────────────────────────────
+function RainbowCircle({
+  size = 32,
+  selected = false,
+}: {
+  size?: number;
+  selected?: boolean;
+}) {
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox="0 0 32 32">
@@ -145,7 +158,9 @@ function RainbowCircle({ size = 32, selected = false }: { size?: number; selecte
           </linearGradient>
         </defs>
         <Circle
-          cx="16" cy="16" r="14"
+          cx="16"
+          cy="16"
+          r="14"
           fill="url(#rainbow)"
           stroke={selected ? "#fff" : "transparent"}
           strokeWidth={selected ? "2.5" : "0"}
@@ -155,14 +170,31 @@ function RainbowCircle({ size = 32, selected = false }: { size?: number; selecte
   );
 }
 
-// â”€â”€â”€ Journal Cover Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function JournalCoverPreview({ color }: { color: string }) {
-  const bgColor = color === "rainbow" ? "#c084fc" : color + "22";
-  const iconColor = color === "rainbow" ? "#fff" : color;
+// ─── Journal Cover Preview ────────────────────────────────────────────────────
+// ✅ FIX: now accepts iconId so the preview reflects the selected icon
+function JournalCoverPreview({
+  color,
+  iconId,
+}: {
+  color: string;
+  iconId: string;
+}) {
+  const bgColor = color === "rainbow" ? "#c084fc22" : color + "22";
+  const iconColor = color === "rainbow" ? "#c084fc" : color;
+  const def = ICON_MAP[iconId];
 
   return (
     <View style={[previewStyles.wrapper, { backgroundColor: bgColor }]}>
-      <FontAwesome6 name="book" size={36} color={iconColor} />
+      {def ? (
+        <FontAwesome6
+          name={def.name}
+          size={36}
+          color={iconColor}
+          iconStyle={def.style ?? "solid"}
+        />
+      ) : (
+        <FontAwesome6 name="book" size={36} color={iconColor} />
+      )}
     </View>
   );
 }
@@ -177,7 +209,7 @@ const previewStyles = StyleSheet.create({
   },
 });
 
-// â”€â”€â”€ Exported JournalIcon â€” use this in journal cards / menus â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Exported JournalIcon — use this in journal cards / menus ─────────────────
 export function JournalIcon({
   iconId,
   color = "#888",
@@ -190,14 +222,25 @@ export function JournalIcon({
   const def = ICON_MAP[iconId];
   if (!def) return null;
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <FontAwesome6 name={def.name} size={size * 0.8} color={color} iconStyle={def.style ?? "solid"} />
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <FontAwesome6
+        name={def.name}
+        size={size * 0.8}
+        color={color}
+        iconStyle={def.style ?? "solid"}
+      />
     </View>
   );
 }
 
-
-// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 type Props = {
   visible: boolean;
@@ -236,12 +279,22 @@ export default function CreateJournalModal({
         <View style={styles.topBar}>
           <Pressable onPress={onClose} style={styles.topBtn} hitSlop={16}>
             <Svg width={16} height={16} viewBox="0 0 16 16">
-              <Path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" fill="#888" />
+              <Path
+                d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"
+                fill="#888"
+              />
             </Svg>
           </Pressable>
-          <Pressable onPress={handleSave} style={styles.topBtnRight} hitSlop={16}>
+          <Pressable
+            onPress={handleSave}
+            style={styles.topBtnRight}
+            hitSlop={16}
+          >
             <Svg width={18} height={18} viewBox="0 0 16 16">
-              <Path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z" fill="#c084fc" />
+              <Path
+                d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"
+                fill="#c084fc"
+              />
             </Svg>
           </Pressable>
         </View>
@@ -251,8 +304,12 @@ export default function CreateJournalModal({
           contentContainerStyle={styles.scrollContent}
         >
           {/* Cover preview */}
+          {/* ✅ FIX: pass selectedIconId so preview updates when icon changes */}
           <View style={styles.previewRow}>
-            <JournalCoverPreview color={selectedColor} />
+            <JournalCoverPreview
+              color={selectedColor}
+              iconId={selectedIconId}
+            />
           </View>
 
           {/* Name input */}
@@ -339,7 +396,7 @@ export default function CreateJournalModal({
   );
 }
 
-// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -363,11 +420,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  topBtnText: {
-    fontSize: 15,
-    color: "#888",
-    fontWeight: "600",
-  },
   topBtnRight: {
     width: 36,
     height: 36,
@@ -377,11 +429,6 @@ const styles = StyleSheet.create({
     borderColor: "#c084fc55",
     alignItems: "center",
     justifyContent: "center",
-  },
-  checkText: {
-    fontSize: 17,
-    color: "#c084fc",
-    fontWeight: "700",
   },
   scrollContent: {
     paddingHorizontal: 20,
