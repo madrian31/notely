@@ -1,8 +1,12 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import * as FileSystem from "expo-file-system/legacy";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
+  Image,
   Keyboard,
   KeyboardEvent,
   Modal,
@@ -537,6 +541,7 @@ type Note = {
   verseRef?: string;
   verseText?: string;
   journalName?: string;
+  images?: string[]; // local file URIs stored in app document directory
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -572,19 +577,6 @@ const HEADINGS = [
   { label: "H3", value: "h3" as const, size: 18, weight: "600" as const },
   { label: "Body", value: undefined, size: 16, weight: "400" as const },
 ];
-
-const HEADING_SIZE: Record<string, number> = {
-  title: 28,
-  h1: 24,
-  h2: 20,
-  h3: 18,
-};
-const HEADING_WEIGHT: Record<string, any> = {
-  title: "800",
-  h1: "700",
-  h2: "600",
-  h3: "600",
-};
 
 // ─── Emotion data ─────────────────────────────────────────────────────────────
 
@@ -777,7 +769,7 @@ function asString(val: string | string[] | undefined, fallback = ""): string {
   return Array.isArray(val) ? val[0] : val;
 }
 
-// ─── Canvas helpers ───────────────────────────────────────────────────────────
+// ─── Canvas helpers (web-only) ────────────────────────────────────────────────
 
 function canvasWrapText(
   ctx: CanvasRenderingContext2D,
@@ -853,6 +845,11 @@ async function drawDevotionCard(
   theme: (typeof CARD_THEMES)[0],
   data: DevotionCardData,
 ): Promise<string> {
+  // ✅ FIX: Guard — document does not exist on native, only on web
+  if (Platform.OS !== "web") {
+    throw new Error("Canvas drawing is only supported on web.");
+  }
+
   const W = 720;
   const PAD = 56;
   const mc = document.createElement("canvas");
@@ -930,7 +927,12 @@ async function drawDevotionCard(
   let curY = 64;
   const dateStr = new Date(data.date || Date.now()).toLocaleDateString(
     "en-US",
-    { weekday: "long", year: "numeric", month: "long", day: "numeric" },
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
   );
   ctx.fillStyle = theme.accent;
   ctx.font = "bold 18px system-ui, sans-serif";
@@ -1031,6 +1033,11 @@ async function drawGeneralNoteCard(
   theme: (typeof NOTE_THEMES)[0],
   data: NoteCardData,
 ): Promise<string> {
+  // ✅ FIX: Guard — document does not exist on native, only on web
+  if (Platform.OS !== "web") {
+    throw new Error("Canvas drawing is only supported on web.");
+  }
+
   const W = 720;
   const PAD = 52;
   const accent = data.accentColor;
@@ -1094,7 +1101,12 @@ async function drawGeneralNoteCard(
   let curY = 8 + 44;
   const dateStr = new Date(data.date || Date.now()).toLocaleDateString(
     "en-US",
-    { weekday: "long", year: "numeric", month: "long", day: "numeric" },
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
   );
   ctx.fillStyle = accent;
   ctx.font = "bold 17px system-ui, sans-serif";
@@ -1194,7 +1206,6 @@ async function shareOrDownloadDataUrl(dataUrl: string, filename: string) {
     a.click();
   } else {
     try {
-      const FileSystem = require("expo-file-system");
       const base64 = dataUrl.split(",")[1];
       if (!base64) throw new Error("Invalid data URL");
       const fileUri = FileSystem.cacheDirectory + filename;
@@ -1221,6 +1232,7 @@ function DevotionCardPreview({
   verseRef,
   verseText,
   segments,
+  bodyText,
   date,
   theme,
 }: {
@@ -1228,10 +1240,12 @@ function DevotionCardPreview({
   verseRef: string;
   verseText: string;
   segments: Segment[];
+  bodyText: string;
   date: string;
   theme: (typeof CARD_THEMES)[0];
 }) {
-  const plainText = segmentsToPlain(segments).trim();
+  // ✅ FIX: prefer bodyText (actual typed content) over segments for preview
+  const plainText = bodyText.trim() || segmentsToPlain(segments).trim();
   const preview =
     plainText.length > 200
       ? plainText.slice(0, 200).trimEnd() + "…"
@@ -1310,6 +1324,7 @@ function DevotionCardPreview({
 function NoteCardPreview({
   title,
   segments,
+  bodyText,
   date,
   emotion,
   tags,
@@ -1319,6 +1334,7 @@ function NoteCardPreview({
 }: {
   title: string;
   segments: Segment[];
+  bodyText: string;
   date: string;
   emotion?: EmotionEntry;
   tags?: string[];
@@ -1326,7 +1342,7 @@ function NoteCardPreview({
   accentColor: string;
   theme: (typeof NOTE_THEMES)[0];
 }) {
-  const plainText = segmentsToPlain(segments).trim();
+  const plainText = bodyText.trim() || segmentsToPlain(segments).trim();
   const dateStr = new Date(date || Date.now()).toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -1505,6 +1521,7 @@ const nc = StyleSheet.create({
 });
 
 // ─── Share Modal — Devotion ───────────────────────────────────────────────────
+// ─── Share Modal — Devotion ───────────────────────────────────────────────────
 
 function ShareDevotionModal({
   visible,
@@ -1513,6 +1530,7 @@ function ShareDevotionModal({
   verseRef,
   verseText,
   segments,
+  bodyText,
   date,
   journalColor,
 }: {
@@ -1522,21 +1540,51 @@ function ShareDevotionModal({
   verseRef: string;
   verseText: string;
   segments: Segment[];
+  bodyText: string;
   date: string;
   journalColor: string;
 }) {
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [status, setStatus] = useState("");
-  const plainText = segmentsToPlain(segments).trim();
+  // ✅ FIX: prefer bodyText (actual typed content) over segments (may be stale)
+  const plainText = bodyText.trim() || segmentsToPlain(segments).trim();
+  // ✅ FIX: don't duplicate — if title === verseRef, skip title on card
+  const displayTitle = title.trim() === verseRef.trim() ? "" : title;
   const theme = CARD_THEMES[selectedTheme];
 
   const handleShare = async () => {
+    if (Platform.OS !== "web") {
+      const shareText = [
+        displayTitle ? `${displayTitle}\n` : "",
+        verseRef ? `📖 ${verseRef}\n` : "",
+        verseText ? `"${verseText.replace(/^"|"$/g, "").trim()}"\n` : "",
+        plainText ? `\n${plainText}` : "",
+        "\n\n— Notely",
+      ].join("");
+      try {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          const fileUri =
+            FileSystem.cacheDirectory + `devotion-${Date.now()}.txt`;
+          await FileSystem.writeAsStringAsync(fileUri, shareText);
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "text/plain",
+            dialogTitle: "Share Devotion",
+          });
+        } else {
+          Alert.alert("Share Devotion", shareText, [{ text: "OK" }]);
+        }
+      } catch {
+        Alert.alert("Share Devotion", shareText, [{ text: "OK" }]);
+      }
+      return;
+    }
     setIsCapturing(true);
     setStatus("Drawing card...");
     try {
       const dataUrl = await drawDevotionCard(theme, {
-        title,
+        title: displayTitle,
         verseRef,
         verseText,
         plainText,
@@ -1544,13 +1592,9 @@ function ShareDevotionModal({
       });
       setStatus("Opening share options...");
       await shareOrDownloadDataUrl(dataUrl, `devotion-${Date.now()}.jpg`);
-      setStatus(
-        Platform.OS === "web"
-          ? "Downloaded! 🎉 Save and share on Messenger."
-          : "",
-      );
-      if (Platform.OS === "web") setTimeout(() => setStatus(""), 4000);
-    } catch (err) {
+      setStatus("Downloaded! 🎉 Save and share on Messenger.");
+      setTimeout(() => setStatus(""), 4000);
+    } catch {
       setStatus("Something went wrong. Try again.");
       setTimeout(() => setStatus(""), 3000);
     } finally {
@@ -1571,7 +1615,11 @@ function ShareDevotionModal({
           <View style={sm.header}>
             <View>
               <Text style={sm.headerTitle}>Share Devotion</Text>
-              <Text style={sm.headerSub}>Choose a card theme to share</Text>
+              <Text style={sm.headerSub}>
+                {Platform.OS === "web"
+                  ? "Choose a card theme to share"
+                  : "Share your devotion note"}
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={sm.closeBtn}>
               <IconX color="#555" />
@@ -1581,66 +1629,71 @@ function ShareDevotionModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 32 }}
           >
-            <View style={sm.cardPreviewWrap}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 16,
-                }}
-              >
-                <DevotionCardPreview
-                  title={title}
-                  verseRef={verseRef}
-                  verseText={verseText}
-                  segments={segments}
-                  date={date}
-                  theme={theme}
-                />
-              </ScrollView>
-              <View style={sm.previewNoteRow}>
-                <IconArrowUp color="#444" />
-                <Text style={sm.previewNote}>
-                  {" "}
-                  Preview — buong content kasama sa actual image
-                </Text>
-              </View>
-            </View>
-            <Text style={sm.sectionLabel}>THEME</Text>
-            <View style={sm.themeRow}>
-              {CARD_THEMES.map((t, idx) => (
-                <TouchableOpacity
-                  key={t.id}
-                  onPress={() => setSelectedTheme(idx)}
-                  style={[
-                    sm.themeBtn,
-                    { backgroundColor: t.bg, borderColor: t.borderColor },
-                    selectedTheme === idx && {
-                      borderColor: t.accent,
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <FontAwesome6
-                    name={t.emoji}
-                    size={18}
-                    color={t.accentLight}
-                    style={{ marginBottom: 4 }}
-                  />
-                  <Text style={[sm.themeLabel, { color: t.accentLight }]}>
-                    {t.label}
-                  </Text>
-                  {selectedTheme === idx && (
-                    <View
-                      style={[sm.themeCheck, { backgroundColor: t.accent }]}
+            {Platform.OS === "web" && (
+              <>
+                <View style={sm.cardPreviewWrap}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      paddingHorizontal: 24,
+                      paddingVertical: 16,
+                    }}
+                  >
+                    <DevotionCardPreview
+                      title={displayTitle}
+                      verseRef={verseRef}
+                      verseText={verseText}
+                      segments={segments}
+                      bodyText={bodyText}
+                      date={date}
+                      theme={theme}
+                    />
+                  </ScrollView>
+                  <View style={sm.previewNoteRow}>
+                    <IconArrowUp color="#444" />
+                    <Text style={sm.previewNote}>
+                      {" "}
+                      Preview — buong content kasama sa actual image
+                    </Text>
+                  </View>
+                </View>
+                <Text style={sm.sectionLabel}>THEME</Text>
+                <View style={sm.themeRow}>
+                  {CARD_THEMES.map((t, idx) => (
+                    <TouchableOpacity
+                      key={t.id}
+                      onPress={() => setSelectedTheme(idx)}
+                      style={[
+                        sm.themeBtn,
+                        { backgroundColor: t.bg, borderColor: t.borderColor },
+                        selectedTheme === idx && {
+                          borderColor: t.accent,
+                          borderWidth: 2,
+                        },
+                      ]}
                     >
-                      <IconCheck color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                      <FontAwesome6
+                        name={t.emoji}
+                        size={18}
+                        color={t.accentLight}
+                        style={{ marginBottom: 4 }}
+                      />
+                      <Text style={[sm.themeLabel, { color: t.accentLight }]}>
+                        {t.label}
+                      </Text>
+                      {selectedTheme === idx && (
+                        <View
+                          style={[sm.themeCheck, { backgroundColor: t.accent }]}
+                        >
+                          <IconCheck color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
             {status ? (
               <View style={sm.statusBox}>
                 <Text style={[sm.statusText, { color: journalColor }]}>
@@ -1653,8 +1706,8 @@ function ShareDevotionModal({
                   <IconInfo />
                   <Text style={sm.tipText}>
                     {Platform.OS === "web"
-                      ? " In the browser, the image will be downloaded. You can now share it in your Messenger group!"
-                      : " Share the image on Messenger, Facebook, or anywhere you like!"}
+                      ? " The image will be downloaded. Share it in your Messenger group!"
+                      : " Image cards are available on the web version. On mobile, share as text."}
                   </Text>
                 </View>
               </View>
@@ -1680,7 +1733,7 @@ function ShareDevotionModal({
                     ? status || "Working..."
                     : Platform.OS === "web"
                       ? "  Download as Image"
-                      : "  Share as Image"}
+                      : "  Share as Text"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -1698,6 +1751,7 @@ function ShareNoteModal({
   onClose,
   title,
   segments,
+  bodyText,
   date,
   emotion,
   tags,
@@ -1708,6 +1762,7 @@ function ShareNoteModal({
   onClose: () => void;
   title: string;
   segments: Segment[];
+  bodyText: string;
   date: string;
   emotion?: EmotionEntry;
   tags?: string[];
@@ -1717,13 +1772,51 @@ function ShareNoteModal({
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [status, setStatus] = useState("");
+  // ✅ FIX: prefer bodyText over segments
+  const plainText = bodyText.trim() || segmentsToPlain(segments).trim();
   const theme = { ...NOTE_THEMES[selectedTheme], accent: journalColor };
 
   const handleShare = async () => {
+    if (Platform.OS !== "web") {
+      const dateStr = new Date(date || Date.now()).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const tagLine =
+        tags && tags.length > 0
+          ? `\n${tags.map((t) => `#${t}`).join(" ")}`
+          : "";
+      const moodLine = emotion ? `\nMood: ${emotion.label}` : "";
+      const shareText = [
+        title ? `${title}\n` : "",
+        `${dateStr}\n`,
+        plainText ? `\n${plainText}` : "",
+        moodLine,
+        tagLine,
+        `\n\n— Notely${journalName ? ` · ${journalName}` : ""}`,
+      ].join("");
+      try {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          const fileUri = FileSystem.cacheDirectory + `note-${Date.now()}.txt`;
+          await FileSystem.writeAsStringAsync(fileUri, shareText);
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "text/plain",
+            dialogTitle: "Share Note",
+          });
+        } else {
+          Alert.alert("Share Note", shareText, [{ text: "OK" }]);
+        }
+      } catch {
+        Alert.alert("Share Note", shareText, [{ text: "OK" }]);
+      }
+      return;
+    }
     setIsCapturing(true);
     setStatus("Drawing card...");
     try {
-      const plainText = segmentsToPlain(segments).trim();
       const dataUrl = await drawGeneralNoteCard(theme, {
         title,
         plainText,
@@ -1735,9 +1828,9 @@ function ShareNoteModal({
       });
       setStatus("Opening share options...");
       await shareOrDownloadDataUrl(dataUrl, `note-${Date.now()}.jpg`);
-      setStatus(Platform.OS === "web" ? "Downloaded! 🎉" : "");
-      if (Platform.OS === "web") setTimeout(() => setStatus(""), 4000);
-    } catch (err) {
+      setStatus("Downloaded! 🎉");
+      setTimeout(() => setStatus(""), 4000);
+    } catch {
       setStatus("Something went wrong. Try again.");
       setTimeout(() => setStatus(""), 3000);
     } finally {
@@ -1761,7 +1854,7 @@ function ShareNoteModal({
               <Text style={sm.headerSub}>
                 {Platform.OS === "web"
                   ? "Image will be downloaded"
-                  : "Saves as image, share anywhere"}
+                  : "Saves as text, share anywhere"}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={sm.closeBtn}>
@@ -1772,68 +1865,76 @@ function ShareNoteModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 32 }}
           >
-            <View style={sm.cardPreviewWrap}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 16,
-                }}
-              >
-                <NoteCardPreview
-                  title={title}
-                  segments={segments}
-                  date={date}
-                  emotion={emotion}
-                  tags={tags}
-                  journalName={journalName}
-                  accentColor={journalColor}
-                  theme={theme}
-                />
-              </ScrollView>
-              <View style={sm.previewNoteRow}>
-                <IconArrowUp color="#444" />
-                <Text style={sm.previewNote}>
-                  {" "}
-                  Preview — buong content kasama sa actual image
-                </Text>
-              </View>
-            </View>
-            <Text style={sm.sectionLabel}>BACKGROUND</Text>
-            <View style={sm.themeRow}>
-              {NOTE_THEMES.map((t, idx) => (
-                <TouchableOpacity
-                  key={t.id}
-                  onPress={() => setSelectedTheme(idx)}
-                  style={[
-                    sm.themeBtn,
-                    { backgroundColor: t.bg, borderColor: t.borderColor },
-                    selectedTheme === idx && {
-                      borderColor: journalColor,
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <FontAwesome6
-                    name={t.emoji}
-                    size={18}
-                    color={journalColor}
-                    style={{ marginBottom: 4 }}
-                  />
-                  <Text style={[sm.themeLabel, { color: journalColor }]}>
-                    {t.label}
-                  </Text>
-                  {selectedTheme === idx && (
-                    <View
-                      style={[sm.themeCheck, { backgroundColor: journalColor }]}
+            {Platform.OS === "web" && (
+              <>
+                <View style={sm.cardPreviewWrap}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      paddingHorizontal: 24,
+                      paddingVertical: 16,
+                    }}
+                  >
+                    <NoteCardPreview
+                      title={title}
+                      segments={segments}
+                      bodyText={bodyText}
+                      date={date}
+                      emotion={emotion}
+                      tags={tags}
+                      journalName={journalName}
+                      accentColor={journalColor}
+                      theme={theme}
+                    />
+                  </ScrollView>
+                  <View style={sm.previewNoteRow}>
+                    <IconArrowUp color="#444" />
+                    <Text style={sm.previewNote}>
+                      {" "}
+                      Preview — buong content kasama sa actual image
+                    </Text>
+                  </View>
+                </View>
+                <Text style={sm.sectionLabel}>BACKGROUND</Text>
+                <View style={sm.themeRow}>
+                  {NOTE_THEMES.map((t, idx) => (
+                    <TouchableOpacity
+                      key={t.id}
+                      onPress={() => setSelectedTheme(idx)}
+                      style={[
+                        sm.themeBtn,
+                        { backgroundColor: t.bg, borderColor: t.borderColor },
+                        selectedTheme === idx && {
+                          borderColor: journalColor,
+                          borderWidth: 2,
+                        },
+                      ]}
                     >
-                      <IconCheck color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                      <FontAwesome6
+                        name={t.emoji}
+                        size={18}
+                        color={journalColor}
+                        style={{ marginBottom: 4 }}
+                      />
+                      <Text style={[sm.themeLabel, { color: journalColor }]}>
+                        {t.label}
+                      </Text>
+                      {selectedTheme === idx && (
+                        <View
+                          style={[
+                            sm.themeCheck,
+                            { backgroundColor: journalColor },
+                          ]}
+                        >
+                          <IconCheck color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
             {status ? (
               <View style={sm.statusBox}>
                 <Text style={[sm.statusText, { color: journalColor }]}>
@@ -1845,9 +1946,9 @@ function ShareNoteModal({
                 <View style={sm.tipRow}>
                   <IconInfo />
                   <Text style={sm.tipText}>
-                    {" "}
-                    Ang buong laman ng note ay kasama sa image — walang
-                    nababawas!
+                    {Platform.OS === "web"
+                      ? " Ang buong laman ng note ay kasama sa image — walang nababawas!"
+                      : " Sa mobile, ang note ay isha-share bilang text file."}
                   </Text>
                 </View>
               </View>
@@ -1873,7 +1974,7 @@ function ShareNoteModal({
                     ? status || "Working..."
                     : Platform.OS === "web"
                       ? "  Download as Image"
-                      : "  Share as Image"}
+                      : "  Share as Text"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -1918,7 +2019,6 @@ const sm = StyleSheet.create({
   headerTitle: { color: "#f0f0f0", fontSize: 16, fontWeight: "700" },
   headerSub: { color: "#555", fontSize: 12, marginTop: 2 },
   closeBtn: { padding: 4 },
-  closeText: { color: "#555", fontSize: 18 },
   cardPreviewWrap: {
     alignItems: "center",
     paddingVertical: 20,
@@ -1952,14 +2052,6 @@ const sm = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 5,
     position: "relative",
-  },
-  themeColorDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
   },
   themeLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.3 },
   themeCheck: {
@@ -2025,15 +2117,20 @@ export default function NoteForm() {
 
   const storageKey = STORAGE_KEYS.notes(journalId);
 
+  // ─── State ────────────────────────────────────────────────────────────────
   const [title, setTitle] = useState(initialTitle);
   const [verseRef, setVerseRef] = useState(paramVerseRef);
   const [verseText, setVerseText] = useState(paramVerseText);
-  // ✅ FIX: verse refs initialized with param values so they're never empty on first save
-  const verseRefRef = useRef(paramVerseRef);
-  const verseTextRef = useRef(paramVerseText);
-  const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
   const [bodyText, setBodyText] = useState("");
-  const [activeIdx, setActiveIdx] = useState(0);
+  const [segments, setSegments] = useState<Segment[]>([defaultSegment()]);
+  const [images, setImages] = useState<string[]>([]);
+
+  // save indicator: "idle" | "unsaved" | "saving" | "saved"
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "unsaved" | "saving" | "saved"
+  >("idle");
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [fmt, setFmt] = useState<Partial<Segment>>({
     bold: false,
     italic: false,
@@ -2055,30 +2152,42 @@ export default function NoteForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [selectedValence, setSelectedValence] = useState<number | null>(null);
-
   const [showDevotionShareModal, setShowDevotionShareModal] = useState(false);
   const [showNoteShareModal, setShowNoteShareModal] = useState(false);
   const [noteDate, setNoteDate] = useState(new Date().toISOString());
-  const [editorFocused, setEditorFocused] = useState(false);
-  const hasContent = bodyText.trim().length > 0;
-  const isDevotionNote = !!(verseRef || verseText);
 
+  // ─── Refs ─────────────────────────────────────────────────────────────────
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteIdRef = useRef<string | null>(noteId || null);
   const hasChanges = useRef(false);
   const isSaving = useRef(false);
-  // ✅ FIX: latestRef now tracks bodyText separately so saveNow always has current text
+  const verseRefRef = useRef(paramVerseRef);
+  const verseTextRef = useRef(paramVerseText);
+  // ✅ CLEANUP: simplified latestRef — single source of truth
   const latestRef = useRef({
     title: initialTitle,
-    segments: [defaultSegment()],
     bodyText: "",
+    segments: [defaultSegment()],
   });
   const emotionRef = useRef<EmotionEntry | undefined>(undefined);
   const activitiesRef = useRef<string[]>([]);
   const tagsRef = useRef<string[]>([]);
   const segsRef = useRef<Segment[]>([defaultSegment()]);
-  const inputRefs = useRef<Record<string, TextInput | null>>({});
+  const imagesRef = useRef<string[]>([]);
 
+  // ─── Derived ──────────────────────────────────────────────────────────────
+  const hasContent = bodyText.trim().length > 0;
+  const isDevotionNote = !!(verseRef || verseText);
+  const toolbarBottom = kbHeight > 0 ? kbHeight : insets.bottom;
+
+  // word count + reading time — computed once per render, not inline in JSX
+  const wordCount = bodyText.trim()
+    ? bodyText.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+  const readingTime =
+    wordCount > 0 ? Math.max(1, Math.round(wordCount / 200)) : 0;
+
+  // ─── Effects ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const showEvt =
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -2098,44 +2207,49 @@ export default function NoteForm() {
     if (noteId) loadNote();
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     };
   }, []);
 
-  useEffect(() => {
-    const seg = segments[activeIdx];
-    if (!seg) return;
-    setFmt({
-      bold: seg.bold ?? false,
-      italic: seg.italic ?? false,
-      underline: seg.underline ?? false,
-      strikethrough: seg.strikethrough ?? false,
-      fontSize: seg.fontSize ?? 16,
-      color: seg.color ?? "#f0f0f0",
-      highlight: seg.highlight ?? "",
-      heading: seg.heading,
-      align: seg.align ?? "left",
-    });
-  }, [activeIdx, segments]);
-
+  // ─── Load note ────────────────────────────────────────────────────────────
   const loadNote = async () => {
     try {
       const stored = await Storage.getItem(storageKey);
       const parsed: Note[] = stored ? JSON.parse(stored) : [];
       const existing = parsed.find((n) => n.id === noteId);
       if (!existing) return;
+
       setTitle(existing.title);
       latestRef.current.title = existing.title;
+
       if (existing.date) setNoteDate(existing.date);
+
       const segs = existing.segments?.length
         ? existing.segments
         : [defaultSegment({ text: existing.text })];
       setSegments(segs);
       segsRef.current = segs;
       latestRef.current.segments = segs;
-      // ✅ FIX: sync bodyText into latestRef on load
+
       const loadedText = segs.map((s) => s.text).join("\n");
       setBodyText(loadedText);
       latestRef.current.bodyText = loadedText;
+
+      // Sync fmt from first segment
+      if (segs[0]) {
+        setFmt({
+          bold: segs[0].bold ?? false,
+          italic: segs[0].italic ?? false,
+          underline: segs[0].underline ?? false,
+          strikethrough: segs[0].strikethrough ?? false,
+          fontSize: segs[0].fontSize ?? 16,
+          color: segs[0].color ?? "#f0f0f0",
+          highlight: segs[0].highlight ?? "",
+          heading: segs[0].heading,
+          align: segs[0].align ?? "left",
+        });
+      }
+
       if (existing.emotion) {
         setEmotion(existing.emotion);
         emotionRef.current = existing.emotion;
@@ -2149,7 +2263,6 @@ export default function NoteForm() {
         setTags(existing.tags);
         tagsRef.current = existing.tags;
       }
-      // ✅ FIX: always sync both state AND refs when loading verse data
       if (existing.verseRef) {
         setVerseRef(existing.verseRef);
         verseRefRef.current = existing.verseRef;
@@ -2158,11 +2271,26 @@ export default function NoteForm() {
         setVerseText(existing.verseText);
         verseTextRef.current = existing.verseText;
       }
+      if (existing.images) {
+        // verify files still exist before restoring
+        const valid: string[] = [];
+        for (const uri of existing.images) {
+          try {
+            const info = await FileSystem.getInfoAsync(uri);
+            if (info.exists) valid.push(uri);
+          } catch {
+            /* skip missing files */
+          }
+        }
+        setImages(valid);
+        imagesRef.current = valid;
+      }
     } catch (err) {
       console.log("loadNote error:", err);
     }
   };
 
+  // ─── Save ──────────────────────────────────────────────────────────────────
   const syncSegmentsFromBody = (text: string) => {
     const lines = text.split("\n");
     const current = segsRef.current;
@@ -2188,18 +2316,20 @@ export default function NoteForm() {
       });
     }
     isSaving.current = true;
-    const { title, segments, bodyText: currentBodyText } = latestRef.current;
-    const cleanTitle = title.trim();
-    // ✅ FIX: prefer bodyText from latestRef as the plain text source of truth
+    setSaveStatus("saving");
+    const cleanTitle = latestRef.current.title.trim();
     const plainText =
-      currentBodyText.trim() || segmentsToPlain(segments).trim();
+      latestRef.current.bodyText.trim() ||
+      segmentsToPlain(latestRef.current.segments).trim();
     if (
       !cleanTitle &&
       !plainText &&
       !verseRefRef.current &&
-      !verseTextRef.current
+      !verseTextRef.current &&
+      imagesRef.current.length === 0
     ) {
       isSaving.current = false;
+      setSaveStatus("idle");
       return;
     }
     try {
@@ -2213,13 +2343,13 @@ export default function NoteForm() {
                 ...n,
                 title: cleanTitle,
                 text: plainText,
-                segments,
+                segments: latestRef.current.segments,
                 emotion: emotionRef.current,
                 activities: activitiesRef.current,
                 tags: tagsRef.current,
-                // ✅ FIX: save current ref values directly — no fallback to old note values
                 verseRef: verseRefRef.current,
                 verseText: verseTextRef.current,
+                images: imagesRef.current,
               }
             : n,
         );
@@ -2233,35 +2363,51 @@ export default function NoteForm() {
             id: newId,
             title: cleanTitle,
             text: plainText,
-            segments,
+            segments: latestRef.current.segments,
             date: nowISO,
             emotion: emotionRef.current,
             activities: activitiesRef.current,
             tags: tagsRef.current,
             verseRef: verseRefRef.current || undefined,
             verseText: verseTextRef.current || undefined,
+            images:
+              imagesRef.current.length > 0 ? imagesRef.current : undefined,
           },
           ...parsed,
         ];
       }
       await Storage.setItem(storageKey, JSON.stringify(updated));
+      // show "Saved" for 2 seconds then go idle
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      setSaveStatus("saved");
+      savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (err) {
       console.log("saveNow error:", err);
+      setSaveStatus("unsaved");
     }
     hasChanges.current = false;
     isSaving.current = false;
   };
 
+  const triggerSave = (currentBodyText?: string) => {
+    hasChanges.current = true;
+    setSaveStatus("unsaved");
+    if (currentBodyText !== undefined) {
+      latestRef.current.bodyText = currentBodyText;
+      syncSegmentsFromBody(currentBodyText);
+    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(saveNow, 1000);
+  };
+
   const handleBack = async () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // ✅ FIX: also check bodyText and verse fields when deciding whether to save
-    const hasContent =
+    const hasContentToSave =
       latestRef.current.title.trim() ||
       latestRef.current.bodyText.trim() ||
-      segmentsToPlain(latestRef.current.segments).trim() ||
       verseRefRef.current ||
       verseTextRef.current;
-    if (hasChanges.current || hasContent) {
+    if (hasChanges.current || hasContentToSave) {
       setIsSavingUI(true);
       isSaving.current = false;
       await saveNow();
@@ -2270,97 +2416,19 @@ export default function NoteForm() {
     router.back();
   };
 
-  const triggerSave = (currentBodyText?: string) => {
-    hasChanges.current = true;
-    if (currentBodyText !== undefined) {
-      // ✅ FIX: store bodyText in latestRef immediately so saveNow always has latest value
-      latestRef.current.bodyText = currentBodyText;
-      syncSegmentsFromBody(currentBodyText);
-    }
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(saveNow, 1000);
-  };
-
-  const pushSegments = (next: Segment[]) => {
+  // ─── Formatting ───────────────────────────────────────────────────────────
+  // ✅ NOTE: applyFmt saves format metadata to segments (for share card data model).
+  // Visual rendering of bold/italic/color in the editor requires segment-based
+  // renderer (Option B) — planned for next iteration.
+  const applyFmt = (patch: Partial<Segment>) => {
+    const next = segsRef.current.map((s, i) =>
+      i === 0 ? { ...s, ...patch } : s,
+    );
     segsRef.current = next;
     latestRef.current.segments = next;
     setSegments(next);
-    triggerSave();
-  };
-
-  const patchSeg = (idx: number, patch: Partial<Segment>) => {
-    const next = segsRef.current.map((s, i) =>
-      i === idx ? { ...s, ...patch } : s,
-    );
-    pushSegments(next);
-  };
-
-  const handleChange = (idx: number, newText: string) => {
-    if (!newText.includes("\n")) {
-      patchSeg(idx, { text: newText });
-      return;
-    }
-    const parts = newText.split("\n");
-    const cur = segsRef.current[idx];
-    const before = segsRef.current.slice(0, idx);
-    const after = segsRef.current.slice(idx + 1);
-    const newSegs: Segment[] = [
-      ...before,
-      { ...cur, text: parts[0] },
-      ...parts
-        .slice(1)
-        .map((p) =>
-          defaultSegment({
-            text: p,
-            fontSize: cur.fontSize,
-            color: cur.color,
-            align: cur.align,
-          }),
-        ),
-      ...after,
-    ];
-    pushSegments(newSegs);
-    const insertedCount = parts.length - 1;
-    setTimeout(() => {
-      const targetIdx = idx + insertedCount;
-      setActiveIdx(targetIdx);
-      inputRefs.current[newSegs[targetIdx]?.id]?.focus();
-    }, 30);
-  };
-
-  const handleEnter = (idx: number) => {
-    const cur = segsRef.current[idx];
-    const before = segsRef.current.slice(0, idx + 1);
-    const after = segsRef.current.slice(idx + 1);
-    const newSeg = defaultSegment({
-      fontSize: cur.fontSize,
-      color: cur.color,
-      align: cur.align,
-    });
-    const newSegs = [...before, newSeg, ...after];
-    pushSegments(newSegs);
-    setTimeout(() => {
-      setActiveIdx(idx + 1);
-      inputRefs.current[newSeg.id]?.focus();
-    }, 30);
-  };
-
-  const handleKeyPress = (idx: number, e: any) => {
-    if (e.nativeEvent.key !== "Backspace") return;
-    const cur = segsRef.current[idx];
-    if (cur.text.length > 0 || idx === 0) return;
-    const prev = segsRef.current[idx - 1];
-    const newSegs = segsRef.current.filter((_, i) => i !== idx);
-    pushSegments(newSegs);
-    setTimeout(() => {
-      setActiveIdx(idx - 1);
-      inputRefs.current[prev?.id]?.focus();
-    }, 30);
-  };
-
-  const applyFmt = (patch: Partial<Segment>) => {
-    patchSeg(activeIdx, patch);
     setFmt((prev) => ({ ...prev, ...patch }));
+    triggerSave();
   };
 
   const toggleFmt = (
@@ -2369,6 +2437,7 @@ export default function NoteForm() {
     applyFmt({ [key]: !fmt[key] });
   };
 
+  // ─── Emotion / Activities / Tags ──────────────────────────────────────────
   const setEmotionEntry = (entry: EmotionEntry | undefined) => {
     emotionRef.current = entry;
     setEmotion(entry);
@@ -2412,14 +2481,63 @@ export default function NoteForm() {
     triggerSave();
   };
 
+  // ─── Image attachment ────────────────────────────────────────────────────
+  const pickImage = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Allow photo access to attach images.",
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+        selectionLimit: 6,
+      });
+      if (result.canceled || !result.assets.length) return;
+
+      const newUris: string[] = [];
+      for (const asset of result.assets) {
+        // copy to app document dir so it persists
+        const filename = `note-img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`;
+        const destUri = FileSystem.documentDirectory + filename;
+        await FileSystem.copyAsync({ from: asset.uri, to: destUri });
+        newUris.push(destUri);
+      }
+      const next = [...imagesRef.current, ...newUris].slice(0, 6); // max 6 images
+      imagesRef.current = next;
+      setImages(next);
+      triggerSave();
+    } catch (err) {
+      console.log("pickImage error:", err);
+    }
+  };
+
+  const removeImage = async (uri: string) => {
+    const next = imagesRef.current.filter((u) => u !== uri);
+    imagesRef.current = next;
+    setImages(next);
+    triggerSave();
+    // delete file from disk
+    try {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    } catch {
+      /* ignore */
+    }
+  };
+
   const handleShare = () => {
     isDevotionNote
       ? setShowDevotionShareModal(true)
       : setShowNoteShareModal(true);
   };
 
-  const toolbarBottom = kbHeight > 0 ? kbHeight : insets.bottom;
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: "#161616" }}>
       {/* Top bar */}
@@ -2438,6 +2556,29 @@ export default function NoteForm() {
             </View>
           )}
         </TouchableOpacity>
+
+        {/* Save status indicator — center of top bar */}
+        <View style={s.saveIndicatorWrap}>
+          {saveStatus === "unsaved" && (
+            <View style={s.saveIndicatorRow}>
+              <View style={[s.saveDot, { backgroundColor: "#555" }]} />
+              <Text style={[s.saveLabel, { color: "#555" }]}>Unsaved</Text>
+            </View>
+          )}
+          {saveStatus === "saving" && (
+            <View style={s.saveIndicatorRow}>
+              <View style={[s.saveDot, { backgroundColor: "#f59e0b" }]} />
+              <Text style={[s.saveLabel, { color: "#f59e0b" }]}>Saving...</Text>
+            </View>
+          )}
+          {saveStatus === "saved" && (
+            <View style={s.saveIndicatorRow}>
+              <FontAwesome6 name="check" size={10} color="#4ade80" />
+              <Text style={[s.saveLabel, { color: "#4ade80" }]}>Saved</Text>
+            </View>
+          )}
+        </View>
+
         {hasContent || title.trim() || verseText ? (
           <TouchableOpacity
             onPress={handleShare}
@@ -2446,7 +2587,9 @@ export default function NoteForm() {
             <IconShare color={journalColor} />
             <Text style={[s.shareBtnText, { color: journalColor }]}>Share</Text>
           </TouchableOpacity>
-        ) : null}
+        ) : (
+          <View style={{ width: 70 }} />
+        )}
       </View>
 
       {/* Title input */}
@@ -2457,6 +2600,7 @@ export default function NoteForm() {
         value={title}
         onChangeText={(t) => {
           setTitle(t);
+          // ✅ FIX: only update title in latestRef here — not in body onChangeText
           latestRef.current.title = t;
           triggerSave();
         }}
@@ -2476,35 +2620,82 @@ export default function NoteForm() {
         </View>
       ) : null}
 
-      {/* Editor */}
-      <TextInput
-        style={[s.bodyInput, { paddingBottom: kbHeight + 80 } as any]}
-        placeholder="Start writing..."
-        placeholderTextColor={journalColor + "40"}
-        value={bodyText}
-        onChangeText={(t) => {
-          setBodyText(t);
-          latestRef.current.title = title;
-          // ✅ FIX: pass text directly so latestRef.bodyText is updated immediately
-          triggerSave(t);
-        }}
-        onFocus={() => setEditorFocused(true)}
-        onBlur={() => setEditorFocused(false)}
-        multiline
-        scrollEnabled
-        selectionColor={journalColor}
-        autoCorrect
-        textAlignVertical="top"
-      />
-      {bodyText.trim().length > 0 && (
+      {/* Editor — single TextInput, segments synced in background */}
+      {/* scrollEnabled={false} + outer ScrollView fixes iOS swipe-back gesture conflict */}
+      <ScrollView
+        style={{ flex: 1 }}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1 }}
+        scrollEventThrottle={16}
+      >
+        <TextInput
+          style={[
+            s.bodyInput,
+            { paddingBottom: kbHeight + 80, minHeight: 300 } as any,
+          ]}
+          placeholder="Start writing..."
+          placeholderTextColor={journalColor + "40"}
+          value={bodyText}
+          onChangeText={(t) => {
+            setBodyText(t);
+            triggerSave(t);
+          }}
+          multiline
+          scrollEnabled={false}
+          selectionColor={journalColor}
+          autoCorrect
+          textAlignVertical="top"
+        />
+      </ScrollView>
+
+      {wordCount > 0 && (
         <Text
           style={[
             s.wordCount,
             { position: "absolute", bottom: kbHeight + 60, right: 18 },
           ]}
         >
-          {bodyText.trim().split(/\s+/).filter(Boolean).length} words
+          {wordCount} words
+          {readingTime > 0 ? ` · ~${readingTime} min read` : ""}
         </Text>
+      )}
+
+      {/* Image strip — shows attached images above toolbar */}
+      {images.length > 0 && (
+        <View style={[s.imageStripWrap, { bottom: toolbarBottom + 50 }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              gap: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+            }}
+          >
+            {images.map((uri) => (
+              <View key={uri} style={s.imageThumbWrap}>
+                <Image
+                  source={{ uri }}
+                  style={s.imageThumb}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  onPress={() => removeImage(uri)}
+                  style={s.imageDeleteBtn}
+                  hitSlop={6}
+                >
+                  <FontAwesome6 name="xmark" size={10} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+            {images.length < 6 && (
+              <TouchableOpacity onPress={pickImage} style={s.imageAddThumb}>
+                <FontAwesome6 name="plus" size={14} color="#555" />
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </View>
       )}
 
       {/* Formatting toolbar */}
@@ -2584,6 +2775,30 @@ export default function NoteForm() {
             hasEmotion={!!emotion}
             emotionColor={emotion?.color}
           />
+          <Divider />
+          {/* Paperclip — image attach */}
+          <TouchableOpacity
+            onPress={pickImage}
+            style={[
+              tbs.btn,
+              images.length > 0 && tbs.btnActive,
+              {
+                backgroundColor:
+                  images.length > 0 ? journalColor + "22" : "#1c1c1c",
+              },
+            ]}
+          >
+            <FontAwesome6
+              name="paperclip"
+              size={14}
+              color={images.length > 0 ? journalColor : "#888"}
+            />
+            {images.length > 0 && (
+              <View style={[s.imageBadge, { backgroundColor: journalColor }]}>
+                <Text style={s.imageBadgeText}>{images.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -2699,8 +2914,14 @@ export default function NoteForm() {
         ))}
       </BottomSheet>
 
+      {/* Tag pills row above toolbar — shift up further if images shown */}
       {(tags.length > 0 || tagInput.length > 0) && (
-        <View style={[s.tagsRow, { bottom: toolbarBottom + 50 }]}>
+        <View
+          style={[
+            s.tagsRow,
+            { bottom: toolbarBottom + (images.length > 0 ? 110 : 50) },
+          ]}
+        >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -2710,7 +2931,11 @@ export default function NoteForm() {
               <TouchableOpacity
                 key={tag}
                 onPress={() => removeTag(tag)}
-                style={s.tagPill}
+                // ✅ FIX: added flexDirection row so icon and text don't stack vertically
+                style={[
+                  s.tagPill,
+                  { flexDirection: "row", alignItems: "center" },
+                ]}
               >
                 <Text style={s.tagPillText}>#{tag} </Text>
                 <IconX color="#888" />
@@ -2899,7 +3124,10 @@ export default function NoteForm() {
                     <TouchableOpacity
                       key={tag}
                       onPress={() => removeTag(tag)}
-                      style={s.tagPill}
+                      style={[
+                        s.tagPill,
+                        { flexDirection: "row", alignItems: "center" },
+                      ]}
                     >
                       <Text style={s.tagPillText}>#{tag} </Text>
                       <IconX color="#888" />
@@ -2912,6 +3140,7 @@ export default function NoteForm() {
         </TouchableOpacity>
       </Modal>
 
+      {/* Share Modals */}
       <ShareDevotionModal
         visible={showDevotionShareModal}
         onClose={() => setShowDevotionShareModal(false)}
@@ -2919,6 +3148,7 @@ export default function NoteForm() {
         verseRef={verseRef}
         verseText={verseText}
         segments={segments}
+        bodyText={bodyText}
         date={noteDate}
         journalColor={journalColor}
       />
@@ -2927,6 +3157,7 @@ export default function NoteForm() {
         onClose={() => setShowNoteShareModal(false)}
         title={title}
         segments={segments}
+        bodyText={bodyText}
         date={noteDate}
         emotion={emotion}
         tags={tags}
@@ -3064,26 +3295,6 @@ const s = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 22,
   },
-  editorContent: { paddingHorizontal: 18, paddingTop: 14 },
-  emptyEditorHint: { alignItems: "center", paddingVertical: 32, gap: 10 },
-  emptyEditorIcon: { fontSize: 32 },
-  emptyEditorText: {
-    fontSize: 14,
-    textAlign: "center",
-    fontStyle: "italic",
-    lineHeight: 22,
-    paddingHorizontal: 24,
-  },
-  segWrapper: { paddingLeft: 0, marginLeft: 0, marginBottom: 0 },
-  segInput: {
-    width: "100%",
-    color: "#f0f0f0",
-    paddingVertical: 2,
-    paddingHorizontal: 0,
-    backgroundColor: "transparent",
-    marginVertical: 1,
-    minHeight: 32,
-  } as any,
   bodyInput: {
     flex: 1,
     color: "#f0f0f0",
@@ -3166,7 +3377,6 @@ const s = StyleSheet.create({
     borderBottomColor: "#1f1f1f",
   },
   sheetTitle: { color: "#e0e0e0", fontSize: 15, fontWeight: "600" },
-  sheetClose: { color: "#555", fontSize: 18, paddingHorizontal: 4 },
   sheetRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -3235,7 +3445,6 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     gap: 4,
   },
-  activityEmojiUnused: { fontSize: 22 },
   activityLabel: { fontSize: 10, color: "#555", fontWeight: "600" },
   tagInputRow: {
     flexDirection: "row",
@@ -3275,4 +3484,62 @@ const s = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "#111",
   },
+
+  // save indicator
+  saveIndicatorWrap: { flex: 1, alignItems: "center" },
+  saveIndicatorRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  saveDot: { width: 6, height: 6, borderRadius: 3 },
+  saveLabel: { fontSize: 11, fontWeight: "500" },
+
+  // image strip
+  imageStripWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    backgroundColor: "#111",
+    borderTopWidth: 1,
+    borderTopColor: "#1e1e1e",
+    zIndex: 99,
+  },
+  imageThumbWrap: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+  },
+  imageThumb: { width: 58, height: 58, borderRadius: 8 },
+  imageDeleteBtn: {
+    position: "absolute",
+    top: 3,
+    right: 3,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageAddThumb: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: "#1c1c1c",
+    borderWidth: 1,
+    borderColor: "#2e2e2e",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageBadge: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageBadgeText: { color: "#fff", fontSize: 8, fontWeight: "700" },
 });

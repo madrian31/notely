@@ -63,10 +63,17 @@ export default function NoteList() {
     await Storage.setItem(storageKey, JSON.stringify(updated));
   };
 
+  // ✅ FIX: Use object-style push — type-safe, no manual URL encoding needed
   const goToNoteForm = (noteId?: string) => {
-    const url = `/note-form?journalId=${journalId}&journalColor=${encodeURIComponent(journalColor)}${noteId ? `&id=${noteId}` : ""}`;
-    console.log("GOING TO:", url);
-    router.push(url as any);
+    router.push({
+      pathname: "/note-form",
+      params: {
+        journalId,
+        journalColor,
+        journalName,
+        ...(noteId ? { id: noteId } : {}),
+      },
+    } as any);
   };
 
   const groupByMonth = (data: Note[]) =>
@@ -157,7 +164,11 @@ export default function NoteList() {
                   style={styles.moreBtn}
                   hitSlop={8}
                 >
-                  <FontAwesome6 name="ellipsis-vertical" size={16} color="#444" />
+                  <FontAwesome6
+                    name="ellipsis-vertical"
+                    size={16}
+                    color="#444"
+                  />
                 </Pressable>
               </Pressable>
             ))}
@@ -200,7 +211,12 @@ export default function NoteList() {
                   pressed && { backgroundColor: "#1a1a1a" },
                 ]}
               >
-                <FontAwesome6 name="pen-to-square" size={16} color="#e0e0e0" iconStyle="regular" />
+                <FontAwesome6
+                  name="pen-to-square"
+                  size={16}
+                  color="#e0e0e0"
+                  iconStyle="regular"
+                />
                 <Text style={styles.menuRowText}>Edit</Text>
               </Pressable>
 
@@ -238,7 +254,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backBtn: { padding: 4, width: 36 },
-  backText: { fontSize: 28, lineHeight: 28 },
   headerTitle: {
     color: "#fff",
     fontSize: 17,
@@ -247,26 +262,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   addBtn: { width: 36, alignItems: "flex-end", padding: 4 },
-  addText: { fontSize: 24 },
-  fab: {
-    position: "absolute",
-    bottom: 32,
-    right: 0,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-  },
-  fabText: { color: "#fff", fontSize: 28, lineHeight: 32 },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: 120,
     gap: 8,
   },
-  emptyIcon: { fontSize: 40, marginBottom: 12 },
   emptyText: {
     color: "#fff",
     fontSize: 17,
@@ -305,7 +306,6 @@ const styles = StyleSheet.create({
   notePreview: { color: "#555", fontSize: 13, marginBottom: 5 },
   noteDate: { color: "#3a3a3a", fontSize: 11, fontWeight: "500" },
   moreBtn: { paddingRight: 14, paddingVertical: 16 },
-  moreIcon: { color: "#444", fontSize: 18 },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -330,14 +330,12 @@ const styles = StyleSheet.create({
   },
   menuTitle: { color: "#888", fontSize: 13, flex: 1, marginRight: 8 },
   menuClose: { padding: 2 },
-  menuCloseText: { color: "#555", fontSize: 15 },
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     padding: 14,
   },
-  menuRowIcon: { fontSize: 16 },
   menuRowText: { color: "#e0e0e0", fontSize: 15, fontWeight: "500" },
   menuDivider: { height: 1, backgroundColor: "#1e1e1e", marginHorizontal: 14 },
 });

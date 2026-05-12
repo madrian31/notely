@@ -1,3 +1,4 @@
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -9,8 +10,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import CreateJournalModal, { JournalIcon } from "../../components/create-journal-modal";
+import CreateJournalModal, {
+  JournalIcon,
+} from "../../components/create-journal-modal";
 import { GreetingHeader } from "../../components/greeting-header";
 import { Storage, STORAGE_KEYS } from "../storage";
 
@@ -18,8 +20,8 @@ export type Journal = {
   id: string;
   name: string;
   color: string;
-  emoji: string;   // kept for backward compat with old data
-  iconId: string;  // new SF Symbols-style icon id
+  emoji: string; // kept for backward compat with old data
+  iconId: string; // new SF Symbols-style icon id
   createdAt: string;
 };
 
@@ -31,10 +33,20 @@ type Note = {
 };
 
 const JOURNAL_COLORS = [
-  "#d45f7f", "#e05252", "#d47bb5", "#e08a8a",
-  "#c9956e", "#e0994d", "#3ecfb2", "#4db8e8",
-  "#3a6ed4", "#89b4d4", "#8f9de0", "#9c7ae0",
-  "#ffffff", "#c084fc",
+  "#d45f7f",
+  "#e05252",
+  "#d47bb5",
+  "#e08a8a",
+  "#c9956e",
+  "#e0994d",
+  "#3ecfb2",
+  "#4db8e8",
+  "#3a6ed4",
+  "#89b4d4",
+  "#8f9de0",
+  "#9c7ae0",
+  "#ffffff",
+  "#c084fc",
 ];
 
 export default function HomeScreen() {
@@ -54,7 +66,7 @@ export default function HomeScreen() {
   const [menuJournal, setMenuJournal] = useState<Journal | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Edit modal (reuses create modal fields)
+  // Edit modal
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingJournal, setEditingJournal] = useState<Journal | null>(null);
 
@@ -102,14 +114,18 @@ export default function HomeScreen() {
     setModalVisible(true);
   };
 
-  const saveNewJournal = async (data: { name: string; color: string; iconId: string }) => {
+  const saveNewJournal = async (data: {
+    name: string;
+    color: string;
+    iconId: string;
+  }) => {
     const trimmed = data.name.trim();
     if (!trimmed) return;
     const newJournal: Journal = {
       id: Date.now().toString(),
       name: trimmed,
       color: data.color,
-      emoji: data.iconId, // keep field for compatibility
+      emoji: data.iconId,
       iconId: data.iconId,
       createdAt: new Date().toISOString(),
     };
@@ -119,13 +135,10 @@ export default function HomeScreen() {
     setModalVisible(false);
   };
 
-
-
   const deleteJournal = async (journal: Journal) => {
     const updated = journals.filter((j) => j.id !== journal.id);
     setJournals(updated);
     await Storage.setItem(STORAGE_KEYS.journals, JSON.stringify(updated));
-    // Also remove its notes
     await Storage.removeItem(STORAGE_KEYS.notes(journal.id));
     setMenuVisible(false);
     setMenuJournal(null);
@@ -141,13 +154,23 @@ export default function HomeScreen() {
     setEditModalVisible(true);
   };
 
-  const saveEditedJournal = async (data: { name: string; color: string; iconId: string }) => {
+  const saveEditedJournal = async (data: {
+    name: string;
+    color: string;
+    iconId: string;
+  }) => {
     if (!editingJournal) return;
     const trimmed = data.name.trim();
     if (!trimmed) return;
     const updated = journals.map((j) =>
       j.id === editingJournal.id
-        ? { ...j, name: trimmed, color: data.color, emoji: data.iconId, iconId: data.iconId }
+        ? {
+            ...j,
+            name: trimmed,
+            color: data.color,
+            emoji: data.iconId,
+            iconId: data.iconId,
+          }
         : j,
     );
     setJournals(updated);
@@ -156,10 +179,16 @@ export default function HomeScreen() {
     setEditingJournal(null);
   };
 
+  // ✅ FIX: Object-style push — no manual URL string encoding, works on all devices
   const goToNoteList = (item: Journal) => {
-    router.push(
-      `../note-list?journalId=${item.id}&journalName=${encodeURIComponent(item.name)}&journalColor=${encodeURIComponent(item.color)}` as any,
-    );
+    router.push({
+      pathname: "/note-list",
+      params: {
+        journalId: item.id,
+        journalName: item.name,
+        journalColor: item.color,
+      },
+    } as any);
   };
 
   const renderJournal = ({ item }: { item: Journal }) => {
@@ -181,7 +210,11 @@ export default function HomeScreen() {
         <View
           style={[styles.journalIcon, { backgroundColor: item.color + "22" }]}
         >
-          <JournalIcon iconId={item.iconId ?? "journals"} color={item.color} size={24} />
+          <JournalIcon
+            iconId={item.iconId ?? "journals"}
+            color={item.color}
+            size={24}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.journalName}>{item.name}</Text>
@@ -216,7 +249,12 @@ export default function HomeScreen() {
           <Text style={styles.statLabel}>Journals</Text>
         </View>
         <View style={styles.statCard}>
-          <FontAwesome6 name="file-lines" size={20} color="#60a5fa" iconStyle="regular" />
+          <FontAwesome6
+            name="file-lines"
+            size={20}
+            color="#60a5fa"
+            iconStyle="regular"
+          />
           <Text style={styles.statValue}>{totalNotes}</Text>
           <Text style={styles.statLabel}>Entries</Text>
         </View>
@@ -276,10 +314,16 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.menuJournalIcon,
-                    { backgroundColor: (menuJournal?.color ?? "#c084fc") + "22" },
+                    {
+                      backgroundColor: (menuJournal?.color ?? "#c084fc") + "22",
+                    },
                   ]}
                 >
-                  <JournalIcon iconId={menuJournal?.iconId ?? "journals"} color={menuJournal?.color ?? "#c084fc"} size={20} />
+                  <JournalIcon
+                    iconId={menuJournal?.iconId ?? "journals"}
+                    color={menuJournal?.color ?? "#c084fc"}
+                    size={20}
+                  />
                 </View>
                 <Text style={styles.menuTitle} numberOfLines={1}>
                   {menuJournal?.name}
@@ -300,7 +344,12 @@ export default function HomeScreen() {
                   pressed && { backgroundColor: "#1e1e1e" },
                 ]}
               >
-                <FontAwesome6 name="pen-to-square" size={16} color="#e0e0e0" iconStyle="regular" />
+                <FontAwesome6
+                  name="pen-to-square"
+                  size={16}
+                  color="#e0e0e0"
+                  iconStyle="regular"
+                />
                 <Text style={styles.menuRowText}>Edit Journal</Text>
               </Pressable>
 
@@ -358,7 +407,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  // ── Floating Action Button ──
   fab: {
     position: "absolute",
     right: 24,
@@ -368,35 +416,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#c084fc",
     alignItems: "center",
     justifyContent: "center",
-
-    // Android shadow
     elevation: 10,
   },
   fabPressed: {
     transform: [{ scale: 0.93 }],
     shadowOpacity: 0.25,
   },
-  fabPlus: {
-    width: 18,
-    height: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fabPlusH: {
-    position: "absolute",
-    width: 18,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: "#fff",
-  },
-  fabPlusV: {
-    position: "absolute",
-    width: 2,
-    height: 18,
-    borderRadius: 1,
-    backgroundColor: "#fff",
-  },
-
   statsRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
   statCard: {
     flex: 1,
@@ -408,7 +433,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1e1e1e",
   },
-  statIcon: { fontSize: 18, marginBottom: 2 },
   statValue: { color: "#fff", fontSize: 18, fontWeight: "700" },
   statLabel: { color: "#555", fontSize: 11, fontWeight: "500" },
   sectionLabel: {
@@ -450,14 +474,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   noteCount: { fontSize: 13, fontWeight: "600" },
-  chevron: { fontSize: 24, fontWeight: "300" },
   emptyState: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -60,
   },
-  emptyIcon: { fontSize: 44, marginBottom: 12 },
   emptyText: {
     color: "#fff",
     fontSize: 17,
@@ -465,8 +487,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   emptySub: { color: "#444", fontSize: 13 },
-
-  // ── Press-hold menu styles ──
   menuOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -498,103 +518,12 @@ const styles = StyleSheet.create({
   },
   menuTitle: { color: "#aaa", fontSize: 14, fontWeight: "600", flex: 1 },
   menuClose: { padding: 2 },
-  menuCloseText: { color: "#555", fontSize: 15 },
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     padding: 15,
   },
-  menuRowIcon: { fontSize: 16 },
   menuRowText: { color: "#e0e0e0", fontSize: 15, fontWeight: "500" },
   menuDivider: { height: 1, backgroundColor: "#1e1e1e", marginHorizontal: 14 },
-
-  // ── Full-screen modal ──
-  fsContainer: {
-    flex: 1,
-    backgroundColor: "#1a1a1a",
-  },
-  fsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  fsHeaderBtn: { padding: 4 },
-  fsCloseCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#2e2e2e",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fsCloseText: { color: "#aaa", fontSize: 14, fontWeight: "600" },
-  fsSaveCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fsSaveText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-
-  fsPreviewWrap: { alignItems: "center", marginTop: 8, marginBottom: 20 },
-  fsPreviewOuter: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fsPreviewEmoji: { fontSize: 48 },
-
-  fsNameInput: {
-    backgroundColor: "#2a2a2a",
-    borderRadius: 14,
-    color: "#f0f0f0",
-    fontSize: 18,
-    fontWeight: "500",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 20,
-  },
-
-  fsColorGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 20,
-    justifyContent: "center",
-  },
-  fsColorDot: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 3,
-    borderColor: "transparent",
-  },
-  fsColorDotSelected: {
-    borderWidth: 3,
-    transform: [{ scale: 1.15 }],
-  },
-
-  fsIconGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    justifyContent: "center",
-  },
-  fsIconBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#2c2c2c",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  fsIconEmoji: { fontSize: 24 },
 });
